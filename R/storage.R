@@ -119,7 +119,7 @@ public=list(
     get_adls_endpoint=function(key=self$list_keys()[1], sas=NULL)
     {
         adls_endpoint(self$properties$primaryEndpoints$dfs, key=key, sas=sas)
-    },
+    }
 
     print=function(...)
     {
