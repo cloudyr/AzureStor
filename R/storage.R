@@ -87,6 +87,11 @@ public=list(
         file_endpoint(self$properties$primaryEndpoints$file, key=key, sas=sas)
     },
 
+    get_adls_endpoint=function(key=self$list_keys()[1], sas=NULL)
+    {
+        adls_endpoint(self$properties$primaryEndpoints$dfs, key=key, sas=sas)
+    }
+
     print=function(...)
     {
         cat("<Azure resource ", self$type, "/", self$name, ">\n", sep="")
