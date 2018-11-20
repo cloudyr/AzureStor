@@ -102,7 +102,9 @@ NULL
 .onLoad <- function(libname, pkgname)
 {
     api <- "2018-03-28"
+    adls_api <- "2018-06-17"
     options(azure_storage_api_version=api)
+    options(azure_adls_api_version=api)
 
     ## extending AzureRMR classes
 

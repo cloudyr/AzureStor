@@ -20,7 +20,7 @@
 #' @export
 storage_endpoint <- function(endpoint, key=NULL, sas=NULL, api_version=getOption("azure_storage_api_version"))
 {
-    type <- sapply(c("blob", "file", "queue", "table"),
+    type <- sapply(c("blob", "file", "queue", "table", "adls"),
                    function(x) is_endpoint_url(endpoint, x))
     if(!any(type))
         stop("Unknown endpoint type", call.=FALSE)
@@ -52,6 +52,18 @@ file_endpoint <- function(endpoint, key=NULL, sas=NULL, api_version=getOption("a
 
     obj <- list(url=endpoint, key=key, sas=sas, api_version=api_version)
     class(obj) <- c("file_endpoint", "storage_endpoint")
+    obj
+}
+
+#' @rdname storage_endpoint
+#' @export
+adls_endpoint <- function(endpoint, key=NULL, sas=NULL, api_version=getOption("azure_adls_api_version"))
+{
+    if(!is_endpoint_url(endpoint, "adls"))
+        stop("Not an ADLS Gen2 endpoint", call.=FALSE)
+
+    obj <- list(url=endpoint, key=key, sas=sas, api_version=api_version)
+    class(obj) <- c("adls_endpoint", "storage_endpoint")
     obj
 }
 
