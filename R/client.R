@@ -86,6 +86,24 @@ print.storage_endpoint <- function(x, ...)
 }
 
 
+#' @rdname storage_endpoint
+#' @export
+print.adls_endpoint <- function(x, ...)
+{
+    cat("Azure Data Lake Storage Gen2 endpoint\n")
+    cat(sprintf("URL: %s\n", x$url))
+    if(!is_empty(x$key))
+        cat("Access key: <hidden>\n")
+    else cat("Access key: <none supplied>\n")
+    if(!is_empty(x$sas))
+        cat("Account shared access signature: <hidden>\n")
+    else cat("Account shared access signature: <none supplied>\n")
+    cat(sprintf("Storage API version: %s\n", x$api_version))
+    invisible(x)
+}
+
+
+
 #' Generic upload and download
 #'
 #' @param src,dest The source and destination files/URLs. Paths are allowed.
