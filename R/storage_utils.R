@@ -1,7 +1,12 @@
 do_container_op <- function(container, path="", options=list(), headers=list(), http_verb="GET", ...)
 {
     endp <- container$endpoint
-    path <- sub("//", "/", paste0(container$name, "/", path))
+
+    # don't add trailing / if no within-container path supplied: ADLS will complain
+    path <- if(nchar(path) > 0)
+        sub("//", "/", paste0(container$name, "/", path))
+    else container$name
+
     invisible(do_storage_call(endp$url, path, options=options, headers=headers,
                               key=endp$key, sas=endp$sas, api_version=endp$api_version,
                               http_verb=http_verb, ...))
