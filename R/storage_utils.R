@@ -144,8 +144,15 @@ parse_storage_url <- function(url)
 
 is_endpoint_url <- function(url, type)
 {
+    # handle cases where type != uri string
+    if(type == "adls")
+        type <- "dfs"
+    else if(type == "web")
+        type <- "z26\\.web"
+
     # endpoint URL must be of the form {scheme}://{acctname}.{type}.{etc}
     type <- sprintf("^https?://[a-z0-9]+\\.%s\\.", type)
+
     is_url(url) && grepl(type, url)
 }
 
