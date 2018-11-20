@@ -8,15 +8,15 @@ adls_filesystem <- function(endpoint, ...)
 #' @rdname adls_filesystem
 #' @export
 adls_filesystem.character <- function(endpoint, key=NULL, sas=NULL,
-                                     api_version=getOption("azure_storage_api_version"),
-                                     ...)
+                                      api_version=getOption("azure_storage_api_version"),
+                                      ...)
 {
     do.call(adls_filesystem, generate_endpoint_container(endpoint, key, sas, api_version))
 }
 
 #' @rdname adls_filesystem
 #' @export
-adls_filesystem.blob_endpoint <- function(endpoint, name, ...)
+adls_filesystem.adls_endpoint <- function(endpoint, name, ...)
 {
     obj <- list(name=name, endpoint=endpoint)
     class(obj) <- "adls_filesystem"
