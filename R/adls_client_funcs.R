@@ -64,7 +64,7 @@ list_adls_filesystems.adls_endpoint <- function(endpoint, ...)
     lst <- do_storage_call(endpoint$url, "/", options=list(resource="account"),
                            key=endpoint$key, sas=endpoint$sas, api_version=endpoint$api_version)
 
-    lst <- lapply(lst$filesystems, function(cont) adls_filesystem(endpoint, cont$Name[[1]]))
+    lst <- lapply(lst$filesystems, function(cont) adls_filesystem(endpoint, cont$name[[1]]))
     named_list(lst)
 }
 
@@ -89,9 +89,58 @@ create_adls_filesystem.character <- function(endpoint, key=NULL, sas=NULL,
 
 #' @rdname adls_filesystem
 #' @export
+create_adls_filesystem.adls_filesystem <- function(endpoint, ...)
+{
+    create_adls_filesystem(endpoint$endpoint, endpoint$name)
+}
+
+#' @rdname adls_filesystem
+#' @export
 create_adls_filesystem.adls_endpoint <- function(endpoint, name, ...)
 {
     obj <- adls_filesystem(endpoint, name)
     do_container_op(obj, options=list(resource="filesystem"), http_verb="PUT")
     obj
+}
+
+
+
+#' @rdname adls_filesystem
+#' @export
+delete_adls_filesystem <- function(endpoint, ...)
+{
+    UseMethod("delete_adls_filesystem")
+}
+
+#' @rdname adls_filesystem
+#' @export
+delete_adls_filesystem.character <- function(endpoint, key=NULL, sas=NULL,
+                                             api_version=getOption("azure_storage_api_version"),
+                                             ...)
+{
+    endp <- generate_endpoint_container(endpoint, key, sas, api_version)
+    delete_adls_filesystem(endp$endpoint, endp$name, ...)
+}
+
+#' @rdname adls_filesystem
+#' @export
+delete_adls_filesystem.adls_filesystem <- function(endpoint, ...)
+{
+    delete_adls_filesystem(endpoint$endpoint, endpoint$name, ...)
+}
+
+#' @rdname adls_filesystem
+#' @export
+delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, ...)
+{
+    if(confirm && interactive())
+    {
+        path <- paste0(endpoint$url, name)
+        yn <- readline(paste0("Are you sure you really want to delete the filesystem '", path, "'? (y/N) "))
+        if(tolower(substr(yn, 1, 1)) != "y")
+            return(invisible(NULL))
+    }
+
+    obj <- adls_filesystem(endpoint, name)
+    do_container_op(obj, options=list(resource="filesystem"), http_verb="DELETE")
 }
