@@ -64,8 +64,7 @@ list_adls_filesystems.adls_endpoint <- function(endpoint, ...)
     lst <- do_storage_call(endpoint$url, "/", options=list(resource="account"),
                            key=endpoint$key, sas=endpoint$sas, api_version=endpoint$api_version)
 
-    lst <- lapply(lst$filesystems, function(cont) adls_filesystem(endpoint, cont$name[[1]]))
-    named_list(lst)
+    sapply(lst$filesystems$name, function(fs) adls_filesystem(endpoint, fs), simplify=FALSE)
 }
 
 
@@ -159,7 +158,9 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
     opts <- c(opts, directory=as.character(dir))
 
     lst <- do_container_op(filesystem, "", options=opts)
-    lst$paths
+    if(info == "all")
+        lst$paths[c("isDirectory", "permissions", "contentLength", "lastModified", "name")]
+    else lst$paths$name
 }
 
 
@@ -177,21 +178,41 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
     else file(src, open="rb")
     on.exit(close(con))
 
+    # create the file
     opts <- list(resource="file")
     do_container_op(filesystem, dest, options=opts, headers=headers, http_verb="PUT")
-    message("File created")
 
     body <- readBin(con, "raw", blocksize)
     bodylen <- length(body)
-    headers[["content-length"]] <- sprintf("%.0f", bodylen)
+    headers <- list(
+        `content-type`="application/octet-stream",
+        `content-length`=sprintf("%.0f", bodylen)
+    )
     opts <- list(resource="file", action="append")
     do_container_op(filesystem, dest, options=opts, headers=headers, body=body, http_verb="PATCH")
 }
 
 
+#' @rdname adls
+#' @export
+delete_adls_file <- function(filesystem, file, confirm=TRUE)
+{
+    if(confirm && interactive())
+    {
+        endp <- filesystem$endpoint
+        path <- paste0(endp$url, filesystem$name, "/", file)
+        yn <- readline(paste0("Are you sure you really want to delete '", path, "'? (y/N) "))
+        if(tolower(substr(yn, 1, 1)) != "y")
+            return(invisible(NULL))
+    }
+
+    opts <- list(recursive=tolower(as.character(FALSE)))
+    do_container_op(filesystem, file, options=opts, http_verb="DELETE")
+}
 
 
-#' @rdname file
+
+#' @rdname adls
 #' @export
 create_adls_dir <- function(filesystem, dir)
 {
@@ -199,7 +220,7 @@ create_adls_dir <- function(filesystem, dir)
 }
 
 
-#' @rdname file
+#' @rdname adls
 #' @export
 delete_adls_dir <- function(filesystem, dir, confirm=TRUE, recursive=FALSE)
 {
