@@ -78,6 +78,8 @@ Get, list, create, or delete ADLS filesystems.
 }
 \details{
 You can call these functions in a couple of ways: by passing the full URL of the share, or by passing the endpoint object and the name of the share as a string.
+
+Currently, the blob and ADLS storage systems overlap to a limited degree: blob containers will show up in listings of ADLS filesystems, and vice-versa. However, the \emph{contents} of the storage are independent. Files that are uploaded as blobs cannot be accessed via ADLSgen2 methods, and similarly, files and directories created via ADLSgen2 will be invisible to blob methods.
 }
 \examples{
 \dontrun{

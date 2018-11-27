@@ -35,6 +35,8 @@ delete_adls_dir(filesystem, dir, recursive = FALSE, confirm = TRUE)
 
 \item{blocksize}{The number of bytes to upload per HTTP(S) request.}
 
+\item{lease}{The lease for a file, if present.}
+
 \item{overwrite}{When downloading, whether to overwrite an existing destination file.}
 
 \item{confirm}{Whether to ask for confirmation on deleting a file or directory.}

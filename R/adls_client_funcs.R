@@ -13,6 +13,8 @@
 #' @details
 #' You can call these functions in a couple of ways: by passing the full URL of the share, or by passing the endpoint object and the name of the share as a string.
 #'
+#' Currently, the blob and ADLS storage systems overlap to a limited degree: blob containers will show up in listings of ADLS filesystems, and vice-versa. However, the _contents_ of the storage are independent. Files that are uploaded as blobs cannot be accessed via ADLSgen2 methods, and similarly, files and directories created via ADLSgen2 will be invisible to blob methods.
+#'
 #' @return
 #' For `adls_filesystem` and `create_adls_filesystem`, an S3 object representing an existing or created filesystem respectively.
 #'
@@ -196,6 +198,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' @param src,dest The source and destination filenames for uploading and downloading. Paths are allowed.
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
 #' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param lease The lease for a file, if present.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param recursive For `list_adls_files`, and `delete_adls_dir`, whether the operation should recurse through subdirectories. For `delete_adls_dir`, this must be TRUE to delete a non-empty directory.
 #'
