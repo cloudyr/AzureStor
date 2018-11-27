@@ -168,28 +168,43 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
 #' @export
 upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
 {
-    content_type <- mime::guess_type(src)
-    headers <- list("x-ms-content-type"=content_type)
-    if(!is.null(lease))
-        headers[["x-ms-lease-id"]] <- as.character(lease)
-
     con <- if(inherits(src, "textConnection"))
         rawConnection(charToRaw(paste0(readLines(src), collapse="\n")))
     else file(src, open="rb")
     on.exit(close(con))
 
     # create the file
-    opts <- list(resource="file")
-    do_container_op(filesystem, dest, options=opts, headers=headers, http_verb="PUT")
+    content_type <- mime::guess_type(src)
+    headers <- list(`x-ms-content-type`=content_type)
+    #if(!is.null(lease))
+        #headers[["x-ms-lease-id"]] <- as.character(lease)
+    do_container_op(filesystem, dest, options=list(resource="file"), headers=headers, http_verb="PUT")
 
-    body <- readBin(con, "raw", blocksize)
-    bodylen <- length(body)
-    headers <- list(
-        `content-type`="application/octet-stream",
-        `content-length`=sprintf("%.0f", bodylen)
-    )
-    opts <- list(resource="file", action="append")
-    do_container_op(filesystem, dest, options=opts, headers=headers, body=body, http_verb="PATCH")
+    # transfer the contents
+    blocklist <- list()
+    pos <- 0
+    while(1)
+    {
+        print(pos)
+        body <- readBin(con, "raw", blocksize)
+        thisblock <- length(body)
+        if(thisblock == 0)
+            break
+
+        headers <- list(
+            `content-type`="application/octet-stream",
+            `content-length`=sprintf("%.0f", thisblock)
+        )
+        opts <- list(action="append", position=sprintf("%.0f", pos))
+
+        do_container_op(filesystem, dest, options=opts, headers=headers, body=body, http_verb="PATCH")
+        pos <- pos + thisblock
+    }
+
+    # flush contents
+    do_container_op(filesystem, dest,
+        options=list(action="flush", position=pos),
+        http_verb="PATCH")
 }
 
 
