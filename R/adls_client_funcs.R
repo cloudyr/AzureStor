@@ -1,3 +1,44 @@
+#' Operations on an ADLSgen2 endpoint
+#'
+#' Get, list, create, or delete ADLS filesystems.
+#'
+#' @param endpoint Either an ADLSgen2 endpoint object as created by [storage_endpoint] or [adls_endpoint], or a character string giving the URL of the endpoint.
+#' @param key,sas If an endpoint object is not supplied, authentication details. Currently the `sas` argument is unused.
+#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-06-17"`.
+#' @param name The name of the filesystem to get, create, or delete.
+#' @param confirm For deleting a filesystem, whether to ask for confirmation.
+#' @param x For the print method, a file share object.
+#' @param ... Further arguments passed to lower-level functions.
+#'
+#' @details
+#' You can call these functions in a couple of ways: by passing the full URL of the share, or by passing the endpoint object and the name of the share as a string.
+#'
+#' @return
+#' For `adls_filesystem` and `create_adls_filesystem`, an S3 object representing an existing or created filesystem respectively.
+#'
+#' For `list_adls_filesystems`, a list of such objects.
+#'
+#' @seealso [storage_endpoint], [az_storage]
+#'
+#' @examples
+#' \dontrun{
+#'
+#' endp <- adls_endpoint("https://mystorage.dfs.core.windows.net/", key="access_key")
+#'
+#' # list ADLSgen2 filesystems
+#' list_adls_filesystems(endp)
+#'
+#' # get, create, and delete a filesystem
+#' adls_filesystem(endp, "myfs")
+#' create_adls_filesystem(endp, "newfs")
+#' delete_adls_filesystem(endp, "newfs")
+#'
+#' # alternative way to do the same
+#' adls_filesystem("https://mystorage.dfs.core.windows.net/myfs", key="access_key")
+#' create_adls_filesystem("https://mystorage.dfs.core.windows.net/newfs", key="access_key")
+#' delete_adls_filesystem("https://mystorage.dfs.core.windows.net/newfs", key="access_key")
+#'
+#' }
 #' @rdname adls_filesystem
 #' @export
 adls_filesystem <- function(endpoint, ...)
@@ -145,8 +186,41 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 }
 
 
-
-
+#' Operations on an ADLSgen2 filesystem
+#'
+#' Upload, download, or delete a file; list files in a directory; create or delete directories.
+#'
+#' @param filesystem An ADLSgen2 filesystem object.
+#' @param dir,file A string naming a directory or file respectively.
+#' @param info Whether to return names only, or all information in a directory listing.
+#' @param src,dest The source and destination filenames for uploading and downloading. Paths are allowed.
+#' @param confirm Whether to ask for confirmation on deleting a file or directory.
+#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param overwrite When downloading, whether to overwrite an existing destination file.
+#' @param recursive For `list_adls_files`, `delete_adls_file` and `delete_adls_dir`, whether the operation should be recursive. For `delete_adls_dir`, this must be TRUE to delete a non-empty directory.
+#'
+#' @return
+#' For `list_adls_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
+#'
+#' @seealso
+#' [adls_filesystem], [az_storage]
+#'
+#' @examples
+#' \dontrun{
+#'
+#' fs <- adls_filesystem("https://mystorage.dfs.core.windows.net/myfilesystem", key="access_key")
+#'
+#' list_adls_files(fs, "/")
+#'
+#' create_adls_dir(fs, "/newdir")
+#'
+#' upload_adls_file(fs, "~/bigfile.zip", dest="/newdir/bigfile.zip")
+#' download_adls_file(fs, "/newdir/bigfile.zip", dest="~/bigfile_downloaded.zip")
+#'
+#' delete_adls_file(fs, "/newdir/bigfile.zip")
+#' delete_adls_dir(fs, "/newdir")
+#'
+#' }
 #' @rdname adls
 #' @export
 list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),

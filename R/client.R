@@ -11,10 +11,12 @@
 #' This is the starting point for the client-side storage interface in AzureRMR. `storage_endpoint` is a generic function to create an endpoint for any type of Azure storage while `blob_endpoint` and `file_endpoint` create endpoints for those types.
 #'
 #' @return
-#' `storage_endpoint` returns an object of S3 class `"blob_endpoint"`, `"file_endpoint"`, `"queue_endpoint"` or `"table_endpoint"` depending on the type of endpoint. All of these also inherit from class `"storage_endpoint"`. `blob_endpoint` and `file_endpoint` return an object of the respective type.
+#' `storage_endpoint` returns an object of S3 class `"adls_endpoint"`, `"blob_endpoint"`, `"file_endpoint"`, `"queue_endpoint"` or `"table_endpoint"` depending on the type of endpoint. All of these also inherit from class `"storage_endpoint"`. `adls_endpoint`, `blob_endpoint` and `file_endpoint` return an object of the respective type.
+#'
+#' Note that currently AzureStor only includes methods for interacting with ADLSgen2 (experimental), blob and file storage.
 #'
 #' @seealso
-#' [az_storage], [file_share], [create_file_share], [blob_container], [create_blob_container]
+#' [az_storage], [adls_filesystem], [create_adls_filesystem], [file_share], [create_file_share], [blob_container], [create_blob_container]
 #'
 #' @examples
 #' \dontrun{
@@ -71,6 +73,9 @@ adls_endpoint <- function(endpoint, key=NULL, sas=NULL, api_version=getOption("a
 {
     if(!is_endpoint_url(endpoint, "adls"))
         stop("Not an ADLS Gen2 endpoint", call.=FALSE)
+
+    if(!missing(sas))
+        warning("ADLS gen2 does not support authentication with a shared access signature")
 
     obj <- list(url=endpoint, key=key, sas=sas, api_version=api_version)
     class(obj) <- c("adls_endpoint", "storage_endpoint")

@@ -7,7 +7,9 @@
 \alias{file_endpoint}
 \alias{queue_endpoint}
 \alias{table_endpoint}
+\alias{adls_endpoint}
 \alias{print.storage_endpoint}
+\alias{print.adls_endpoint}
 \title{Create a storage endpoint object}
 \usage{
 storage_endpoint(endpoint, key = NULL, sas = NULL,
@@ -19,7 +21,12 @@ blob_endpoint(endpoint, key = NULL, sas = NULL,
 file_endpoint(endpoint, key = NULL, sas = NULL,
   api_version = getOption("azure_storage_api_version"))
 
+adls_endpoint(endpoint, key = NULL, sas = NULL,
+  api_version = getOption("azure_adls_api_version"))
+
 \method{print}{storage_endpoint}(x, ...)
+
+\method{print}{adls_endpoint}(x, ...)
 }
 \arguments{
 \item{endpoint}{The URL (hostname) for the endpoint. This must be of the form \code{http[s]://{account-name}.{type}.{core-host-name}}, where \code{type} is one of \code{"blob"}, \code{"file"}, \code{"queue"} or \code{"table"}. On the public Azure cloud, endpoints will be of the form \code{https://{account-name}.{type}.core.windows.net}.}
@@ -35,7 +42,9 @@ file_endpoint(endpoint, key = NULL, sas = NULL,
 \item{...}{For the print method, further arguments passed to lower-level functions.}
 }
 \value{
-\code{storage_endpoint} returns an object of S3 class \code{"blob_endpoint"}, \code{"file_endpoint"}, \code{"queue_endpoint"} or \code{"table_endpoint"} depending on the type of endpoint. All of these also inherit from class \code{"storage_endpoint"}. \code{blob_endpoint} and \code{file_endpoint} return an object of the respective type.
+\code{storage_endpoint} returns an object of S3 class \code{"adls_endpoint"}, \code{"blob_endpoint"}, \code{"file_endpoint"}, \code{"queue_endpoint"} or \code{"table_endpoint"} depending on the type of endpoint. All of these also inherit from class \code{"storage_endpoint"}. \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} return an object of the respective type.
+
+Note that currently AzureStor only includes methods for interacting with ADLSgen2 (experimental), blob and file storage.
 }
 \description{
 Create a storage endpoint object
@@ -55,5 +64,5 @@ endp <- blob_endpoint("https://mystorage.blob.core.windows.net/", key="access_ke
 }
 }
 \seealso{
-\link{az_storage}, \link{file_share}, \link{create_file_share}, \link{blob_container}, \link{create_blob_container}
+\link{az_storage}, \link{adls_filesystem}, \link{create_adls_filesystem}, \link{file_share}, \link{create_file_share}, \link{blob_container}, \link{create_blob_container}
 }
