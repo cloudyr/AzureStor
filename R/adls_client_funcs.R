@@ -185,7 +185,6 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
     pos <- 0
     while(1)
     {
-        print(pos)
         body <- readBin(con, "raw", blocksize)
         thisblock <- length(body)
         if(thisblock == 0)
@@ -206,6 +205,15 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
         options=list(action="flush", position=pos),
         http_verb="PATCH")
 }
+
+
+#' @rdname adls
+#' @export
+download_adls_file <- function(filesystem, src, dest, overwrite=FALSE)
+{
+    do_container_op(filesystem, src, config=httr::write_disk(dest, overwrite))
+}
+
 
 
 #' @rdname adls
