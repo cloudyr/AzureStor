@@ -159,8 +159,29 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
 
     lst <- do_container_op(filesystem, "", options=opts)
     if(info == "all")
-        lst$paths[c("isDirectory", "permissions", "contentLength", "lastModified", "name")]
-    else lst$paths$name
+    {
+        out <- lst$paths
+
+        # cater for null output
+        if(is_empty(out))
+            out <- data.frame(
+                name=character(0),
+                contentLength=numeric(0),
+                isDirectory=logical(0),
+                permissions=character(0),
+                lastModified=numeric(0))
+
+        # normalise output
+        if(is.null(out$isDirectory))
+            out$isDirectory <- FALSE
+        else out$isDirectory <- !is.na(out$isDirectory)
+        if(is.null(out$contentLength))
+            out$contentLength <- 0
+        else out$contentLength[is.na(out$contentLength)] <- 0
+
+        out[c("name", "contentLength", "isDirectory", "permissions", "lastModified")]
+    }
+    else as.character(lst$paths$name)
 }
 
 
@@ -218,7 +239,7 @@ download_adls_file <- function(filesystem, src, dest, overwrite=FALSE)
 
 #' @rdname adls
 #' @export
-delete_adls_file <- function(filesystem, file, confirm=TRUE)
+delete_adls_file <- function(filesystem, file, recursive=FALSE, confirm=TRUE)
 {
     if(confirm && interactive())
     {
@@ -229,7 +250,7 @@ delete_adls_file <- function(filesystem, file, confirm=TRUE)
             return(invisible(NULL))
     }
 
-    opts <- list(recursive=tolower(as.character(FALSE)))
+    opts <- list(recursive=tolower(as.character(recursive)))
     do_container_op(filesystem, file, options=opts, http_verb="DELETE")
 }
 
@@ -245,7 +266,7 @@ create_adls_dir <- function(filesystem, dir)
 
 #' @rdname adls
 #' @export
-delete_adls_dir <- function(filesystem, dir, confirm=TRUE, recursive=FALSE)
+delete_adls_dir <- function(filesystem, dir, recursive=FALSE, confirm=TRUE)
 {
     if(confirm && interactive())
     {
