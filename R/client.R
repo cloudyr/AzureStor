@@ -38,7 +38,7 @@ storage_endpoint <- function(endpoint, key=NULL, sas=NULL, api_version=getOption
         stop("Unknown endpoint type", call.=FALSE)
     type <- names(type)[type]
 
-    if(type == "adls" && !missing(sas))
+    if(type == "adls" && !is_empty(sas))
         warning("ADLSgen2 does not support authentication with a shared access signature")
 
     obj <- list(url=endpoint, key=key, sas=sas, api_version=api_version)
@@ -77,7 +77,7 @@ adls_endpoint <- function(endpoint, key=NULL, sas=NULL, api_version=getOption("a
     if(!is_endpoint_url(endpoint, "adls"))
         stop("Not an ADLS Gen2 endpoint", call.=FALSE)
 
-    if(!missing(sas))
+    if(!is_empty(sas))
         warning("ADLSgen2 does not support authentication with a shared access signature")
 
     obj <- list(url=endpoint, key=key, sas=sas, api_version=api_version)

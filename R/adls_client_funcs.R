@@ -13,7 +13,7 @@
 #' @details
 #' You can call these functions in a couple of ways: by passing the full URL of the share, or by passing the endpoint object and the name of the share as a string.
 #'
-#' Currently, the blob and ADLS storage systems overlap to a limited degree: blob containers will show up in listings of ADLS filesystems, and vice-versa. However, the _contents_ of the storage are independent. Files that are uploaded as blobs cannot be accessed via ADLSgen2 methods, and similarly, files and directories created via ADLSgen2 will be invisible to blob methods.
+#' Currently, if hierarchical namespaces are enabled, there is no interoperability of the blob and ADLSgen2 storage systems. Blob containers will show up in listings of ADLS filesystems, and vice-versa, but the _contents_ of the storage are independent: files that are uploaded as blobs cannot be accessed via ADLS methods, and similarly, files and directories created via ADLS will be invisible to blob methods.
 #'
 #' @return
 #' For `adls_filesystem` and `create_adls_filesystem`, an S3 object representing an existing or created filesystem respectively.
@@ -241,12 +241,11 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
 
         # cater for null output
         if(is_empty(out))
-            out <- data.frame(
+            return(data.frame(
                 name=character(0),
                 contentLength=numeric(0),
                 isDirectory=logical(0),
-                permissions=character(0),
-                lastModified=numeric(0))
+                lastModified=numeric(0)))
 
         # normalise output
         if(is.null(out$isDirectory))
@@ -255,8 +254,19 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
         if(is.null(out$contentLength))
             out$contentLength <- 0
         else out$contentLength[is.na(out$contentLength)] <- 0
+        if(is.null(out$etag))
+            out$etag <- ""
+        else out$etag[is.na(out$etag)] <- ""
+        if(is.null(out$permissions))
+            out$permissions <- ""
+        else out$permissions[is.na(out$permissions)] <- ""
+        out <- out[c("name", "contentLength", "isDirectory", "lastModified", "permissions", "etag")]
 
-        out[c("name", "contentLength", "isDirectory", "permissions", "lastModified")]
+        if(all(out$permissions == ""))
+            out$permissions <- NULL
+        if(all(out$etag == ""))
+            out$etag <- NULL
+        out
     }
     else as.character(lst$paths$name)
 }
