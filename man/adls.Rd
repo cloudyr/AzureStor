@@ -7,7 +7,7 @@
 \alias{delete_adls_file}
 \alias{create_adls_dir}
 \alias{delete_adls_dir}
-\title{Operations on an ADLSgen2 filesystem}
+\title{Operations on an Azure Data Lake Storage Gen2 filesystem}
 \usage{
 list_adls_files(filesystem, dir = "/", info = c("all", "name"),
   recursive = FALSE)
@@ -16,7 +16,7 @@ upload_adls_file(filesystem, src, dest, blocksize = 2^24, lease = NULL)
 
 download_adls_file(filesystem, src, dest, overwrite = FALSE)
 
-delete_adls_file(filesystem, file, recursive = FALSE, confirm = TRUE)
+delete_adls_file(filesystem, file, confirm = TRUE)
 
 create_adls_dir(filesystem, dir)
 
@@ -29,7 +29,7 @@ delete_adls_dir(filesystem, dir, recursive = FALSE, confirm = TRUE)
 
 \item{info}{Whether to return names only, or all information in a directory listing.}
 
-\item{recursive}{For \code{list_adls_files}, \code{delete_adls_file} and \code{delete_adls_dir}, whether the operation should be recursive. For \code{delete_adls_dir}, this must be TRUE to delete a non-empty directory.}
+\item{recursive}{For \code{list_adls_files}, and \code{delete_adls_dir}, whether the operation should recurse through subdirectories. For \code{delete_adls_dir}, this must be TRUE to delete a non-empty directory.}
 
 \item{src, dest}{The source and destination filenames for uploading and downloading. Paths are allowed.}
 

@@ -1,4 +1,4 @@
-#' Operations on an ADLSgen2 endpoint
+#' Operations on an Azure Data Lake Storage Gen2 endpoint
 #'
 #' Get, list, create, or delete ADLS filesystems.
 #'
@@ -186,7 +186,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 }
 
 
-#' Operations on an ADLSgen2 filesystem
+#' Operations on an Azure Data Lake Storage Gen2 filesystem
 #'
 #' Upload, download, or delete a file; list files in a directory; create or delete directories.
 #'
@@ -197,7 +197,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
 #' @param blocksize The number of bytes to upload per HTTP(S) request.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
-#' @param recursive For `list_adls_files`, `delete_adls_file` and `delete_adls_dir`, whether the operation should be recursive. For `delete_adls_dir`, this must be TRUE to delete a non-empty directory.
+#' @param recursive For `list_adls_files`, and `delete_adls_dir`, whether the operation should recurse through subdirectories. For `delete_adls_dir`, this must be TRUE to delete a non-empty directory.
 #'
 #' @return
 #' For `list_adls_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
@@ -313,7 +313,7 @@ download_adls_file <- function(filesystem, src, dest, overwrite=FALSE)
 
 #' @rdname adls
 #' @export
-delete_adls_file <- function(filesystem, file, recursive=FALSE, confirm=TRUE)
+delete_adls_file <- function(filesystem, file, confirm=TRUE)
 {
     if(confirm && interactive())
     {
@@ -324,8 +324,7 @@ delete_adls_file <- function(filesystem, file, recursive=FALSE, confirm=TRUE)
             return(invisible(NULL))
     }
 
-    opts <- list(recursive=tolower(as.character(recursive)))
-    do_container_op(filesystem, file, options=opts, http_verb="DELETE")
+    do_container_op(filesystem, file, http_verb="DELETE")
 }
 
 

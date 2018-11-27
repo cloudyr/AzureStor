@@ -29,13 +29,13 @@ adls_endpoint(endpoint, key = NULL, sas = NULL,
 \method{print}{adls_endpoint}(x, ...)
 }
 \arguments{
-\item{endpoint}{The URL (hostname) for the endpoint. This must be of the form \code{http[s]://{account-name}.{type}.{core-host-name}}, where \code{type} is one of \code{"blob"}, \code{"file"}, \code{"queue"} or \code{"table"}. On the public Azure cloud, endpoints will be of the form \code{https://{account-name}.{type}.core.windows.net}.}
+\item{endpoint}{The URL (hostname) for the endpoint. This must be of the form \code{http[s]://{account-name}.{type}.{core-host-name}}, where \code{type} is one of \code{"dfs"} (corresponding to ADLSgen2), \code{"blob"}, \code{"file"}, \code{"queue"} or \code{"table"}. On the public Azure cloud, endpoints will be of the form \code{https://{account-name}.{type}.core.windows.net}.}
 
 \item{key}{The access key for the storage account.}
 
-\item{sas}{A shared access signature (SAS) for the account. If \code{key} is also provided, the SAS is not used. If neither \code{key} nor \code{sas} are provided, only public (anonymous) access to the endpoint is possible.}
+\item{sas}{A shared access signature (SAS) for the account. If \code{key} is also provided, the SAS is not used. If neither \code{key} nor \code{sas} are provided, only public (anonymous) access to the endpoint is possible. Note that authentication with a SAS is not supported by ADLSgen2.}
 
-\item{api_version}{The storage API version to use when interacting with the host. Currently defaults to \code{"2018-03-28"}.}
+\item{api_version}{The storage API version to use when interacting with the host. Currently defaults to \code{"2018-06-17"} for the ADLSgen2 endpoint, and \code{"2018-03-28"} for the others.}
 
 \item{x}{For the print method, a storage endpoint object.}
 
@@ -44,13 +44,13 @@ adls_endpoint(endpoint, key = NULL, sas = NULL,
 \value{
 \code{storage_endpoint} returns an object of S3 class \code{"adls_endpoint"}, \code{"blob_endpoint"}, \code{"file_endpoint"}, \code{"queue_endpoint"} or \code{"table_endpoint"} depending on the type of endpoint. All of these also inherit from class \code{"storage_endpoint"}. \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} return an object of the respective type.
 
-Note that currently AzureStor only includes methods for interacting with ADLSgen2 (experimental), blob and file storage.
+Currently AzureStor only includes methods for interacting with ADLSgen2 (experimental), blob and file storage.
 }
 \description{
 Create a storage endpoint object
 }
 \details{
-This is the starting point for the client-side storage interface in AzureRMR. \code{storage_endpoint} is a generic function to create an endpoint for any type of Azure storage while \code{blob_endpoint} and \code{file_endpoint} create endpoints for those types.
+This is the starting point for the client-side storage interface in AzureRMR. \code{storage_endpoint} is a generic function to create an endpoint for any type of Azure storage while \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} create endpoints for those types.
 }
 \examples{
 \dontrun{

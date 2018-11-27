@@ -16,7 +16,7 @@
 \alias{delete_adls_filesystem.character}
 \alias{delete_adls_filesystem.adls_filesystem}
 \alias{delete_adls_filesystem.adls_endpoint}
-\title{Operations on an ADLSgen2 endpoint}
+\title{Operations on an Azure Data Lake Storage Gen2 endpoint}
 \usage{
 adls_filesystem(endpoint, ...)
 
