@@ -310,7 +310,7 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
 
     # flush contents
     do_container_op(filesystem, dest,
-        options=list(action="flush", position=pos),
+        options=list(action="flush", position=sprintf("%.0f", pos)),
         http_verb="PATCH")
 }
 
