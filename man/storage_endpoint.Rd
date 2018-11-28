@@ -42,12 +42,12 @@ adls_endpoint(endpoint, key = NULL, sas = NULL,
 \item{...}{For the print method, further arguments passed to lower-level functions.}
 }
 \value{
-\code{storage_endpoint} returns an object of S3 class \code{"adls_endpoint"}, \code{"blob_endpoint"}, \code{"file_endpoint"}, \code{"queue_endpoint"} or \code{"table_endpoint"} depending on the type of endpoint. All of these also inherit from class \code{"storage_endpoint"}. \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} return an object of the respective type.
+\code{storage_endpoint} returns an object of S3 class \code{"adls_endpoint"}, \code{"blob_endpoint"}, \code{"file_endpoint"}, \code{"queue_endpoint"} or \code{"table_endpoint"} depending on the type of endpoint. All of these also inherit from class \code{"storage_endpoint"}. \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} return an object of the respective class.
 
 Currently AzureStor only includes methods for interacting with ADLSgen2 (experimental), blob and file storage.
 }
 \description{
-Create a storage endpoint object
+Create a storage endpoint object, for interacting with blob, file, table, queue or ADLSgen2 storage. Currently (as of November 2018) ADLSgen2 is in limited-access private preview.
 }
 \details{
 This is the starting point for the client-side storage interface in AzureRMR. \code{storage_endpoint} is a generic function to create an endpoint for any type of Azure storage while \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} create endpoints for those types.
