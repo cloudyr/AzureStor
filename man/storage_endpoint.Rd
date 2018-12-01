@@ -35,7 +35,7 @@ adls_endpoint(endpoint, key = NULL, sas = NULL,
 
 \item{sas}{A shared access signature (SAS) for the account. If \code{key} is also provided, the SAS is not used. If neither \code{key} nor \code{sas} are provided, only public (anonymous) access to the endpoint is possible. Note that authentication with a SAS is not supported by ADLSgen2.}
 
-\item{api_version}{The storage API version to use when interacting with the host. Currently defaults to \code{"2018-06-17"} for the ADLSgen2 endpoint, and \code{"2018-03-28"} for the others.}
+\item{api_version}{The storage API version to use when interacting with the host. Defaults to \code{"2018-06-17"} for the ADLSgen2 endpoint, and \code{"2018-03-28"} for the others.}
 
 \item{x}{For the print method, a storage endpoint object.}
 
@@ -47,7 +47,7 @@ adls_endpoint(endpoint, key = NULL, sas = NULL,
 Currently AzureStor only includes methods for interacting with ADLSgen2 (experimental), blob and file storage.
 }
 \description{
-Create a storage endpoint object, for interacting with blob, file, table, queue or ADLSgen2 storage. Currently (as of November 2018) ADLSgen2 is in limited-access private preview.
+Create a storage endpoint object, for interacting with blob, file, table, queue or ADLSgen2 storage. Currently (as of December 2018) ADLSgen2 is in general-access public preview.
 }
 \details{
 This is the starting point for the client-side storage interface in AzureRMR. \code{storage_endpoint} is a generic function to create an endpoint for any type of Azure storage while \code{adls_endpoint}, \code{blob_endpoint} and \code{file_endpoint} create endpoints for those types.

@@ -20,7 +20,7 @@
 #' - `replication`: The replication strategy for the account. The default is locally-redundant storage (LRS).
 #' - `access_tier`: The access tier, either `"hot"` or `"cool"`, for blobs.
 #' - `https_only`: Whether a HTTPS connection is required to access the storage.
-#' - `hierarchical_namespace_enabled`: Whether to enable hierarchical namespaces, which are a feature of Azure Data Lake Storage Gen 2 and provide more a efficient way to manage storage. Note that ADLS Gen2 is currently (as of November 2018) in limited-access public preview. if you are not enrolled in the preview program, this argument has no effect.
+#' - `hierarchical_namespace_enabled`: Whether to enable hierarchical namespaces, which are a feature of Azure Data Lake Storage Gen 2 and provide more a efficient way to manage storage. ADLS Gen2 is currently (as of December 2018) in general-access public preview.
 #' - `properties`: A list of other properties for the storage account.
 #' - ... Other named arguments to pass to the [az_storage] initialization function.
 #'
@@ -33,7 +33,7 @@
 #'
 #' Accounts created with `kind = "BlobStorage"` can only host blob storage, while those with `kind = "FileStorage"` can only host file storage. Accounts with `kind = "StorageV2"` can host all types of storage. Currently, AzureStor provides an R interface only to blob and file storage.
 #'
-#' Currently, if hierarchical namespaces are enabled, there is no interoperability of the blob and ADLSgen2 storage systems. Blob containers will show up in listings of ADLS filesystems, and vice-versa, but the _contents_ of the storage are independent: files that are uploaded as blobs cannot be accessed via ADLS methods, and similarly, files and directories created via ADLS will be invisible to blob methods.
+#' If hierarchical namespaces are enabled, there is no interoperability of the blob and ADLSgen2 storage systems. Blob containers will show up in listings of ADLS filesystems, and vice-versa, but the _contents_ of the storage are independent: files that are uploaded as blobs cannot be accessed via ADLS methods, and similarly, files and directories created via ADLS will be invisible to blob methods. Full interoperability between blobs and ADLS is planned for 2019.
 #'
 #' @section Value:
 #' An object of class `az_storage` representing the created storage account.

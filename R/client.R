@@ -1,11 +1,11 @@
 #' Create a storage endpoint object
 #'
-#' Create a storage endpoint object, for interacting with blob, file, table, queue or ADLSgen2 storage. Currently (as of November 2018) ADLSgen2 is in limited-access private preview.
+#' Create a storage endpoint object, for interacting with blob, file, table, queue or ADLSgen2 storage. Currently (as of December 2018) ADLSgen2 is in general-access public preview.
 #'
 #' @param endpoint The URL (hostname) for the endpoint. This must be of the form `http[s]://{account-name}.{type}.{core-host-name}`, where `type` is one of `"dfs"` (corresponding to ADLSgen2), `"blob"`, `"file"`, `"queue"` or `"table"`. On the public Azure cloud, endpoints will be of the form `https://{account-name}.{type}.core.windows.net`.
 #' @param key The access key for the storage account.
 #' @param sas A shared access signature (SAS) for the account. If `key` is also provided, the SAS is not used. If neither `key` nor `sas` are provided, only public (anonymous) access to the endpoint is possible. Note that authentication with a SAS is not supported by ADLSgen2.
-#' @param api_version The storage API version to use when interacting with the host. Currently defaults to `"2018-06-17"` for the ADLSgen2 endpoint, and `"2018-03-28"` for the others.
+#' @param api_version The storage API version to use when interacting with the host. Defaults to `"2018-06-17"` for the ADLSgen2 endpoint, and `"2018-03-28"` for the others.
 #' @param x For the print method, a storage endpoint object.
 #' @param ... For the print method, further arguments passed to lower-level functions.
 #'
