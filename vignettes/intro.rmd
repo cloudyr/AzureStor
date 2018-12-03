@@ -135,8 +135,6 @@ stor$get_adls_endpoint()
 # Storage API version: 2018-03-28
 ```
 
-(As of November 2018, Azure Data Lake Storage Gen2 is in limited-access public preview. If you are not enrolled in the preview program, you can skip over any mentions of ADLSgen2 in this vignette.)
-
 This shows that the base URL to access blob storage is https://mynewstorage.blob.core.windows.net/, for file storage it is https://mynewstorage.file.core.windows.net/, and for Azure Data Lake Storage Gen2, it is https://mynewstorage.dfs.core.windows.net/. While it's not displayed, the endpoint objects also include the access key necessary for authenticated access to storage; this is obtained directly from the storage account resource. 
 
 More practically, you will usually want to work with a storage endpoint without having to go through the process of authenticating with Azure Resource Manager. Often, you may not have any ARM credentials to start with (a tenant ID and/or service principal details). In this case, you can create the endpoint object directly with the  `blob_endpoint()`, `file_endpoint()` and `adls_endpoint()` functions. When you create the endpoint this way, you have to provide the access key explicitly (assuming you know what it is).
@@ -171,7 +169,7 @@ If you don't have a key or a SAS, you will only have access to unauthenticated (
 
 ### Container and object access: blob containers, file shares, ADLS filesystems, blobs, files
 
-Given an endpoint object, AzureStor provides the following methods for working with containers:
+The client interface for AzureStor supports blob storage, file storage, and Azure Data Lake Storage Gen 2. All of these types have some features in common with each other. In particular, the storage within each type is organised into containers: blob _containers_, file _shares_, and ADLSgen2 _filesystems_. Given an endpoint object, AzureStor provides the following methods for working with containers:
 
 - `blob_container, create_blob_container, delete_blob_container`: get an existing blob container, create a new container, and delete a container
 - `list_blob_containers`: return a list of blob container objects
@@ -228,7 +226,7 @@ adls_filesystem("https://mynewstorage.dfs.core.windows.net/myshare",
     key="mystorageaccountkey")
 ```
 
-Given a blob container or file share object, use the `list_blobs()` and `list_azure_files()` functions to list the storage objects they contain. Note the "azure" in `list_azure_files` to avoid any confusion with R's regular `list.files` function.
+The `list_blobs()`, `list_azure_files()` and `list_adls_files()` functions will list the storage objects within a container of the requisite type. Note the "azure" and "adls" in `list_azure_files` and `list_adls_files` to avoid confusion with R's regular `list.files` function.
 
 ```{r, eval=FALSE}
 # list blobs inside a blob container
@@ -242,11 +240,18 @@ list_blobs(cont, info="name")
 # [1] "fs.txt"  "fs2.txt"
 
 
-# and for files inside a file share
+# files inside a file share
 list_azure_files(share, "/")
 #       name type   size
 # 1 100k.txt File 100000
 # 2   fs.txt File    132
+
+
+# and files inside an ADLS filesystem
+list_adls_files(fs, "/")
+#        name contentLength isDirectory                  lastModified permissions
+# 1 blog.html         27128       FALSE Mon, 03 Dec 2018 15:20:31 GMT   rw-r-----
+# 2    newdir             0        TRUE Thu, 29 Nov 2018 03:42:56 GMT   rwxr-x---
 ```
 
 To transfer files and blobs, use the following functions:
@@ -280,7 +285,7 @@ download_from_url("https://mynewstorage.blob.core.windows.net/mycontainer/myblob
     overwrite=TRUE)
 ```
 
-File shares have the additional feature of supporting directories. To create and delete directories, use `create_azure_dir()` and `delete_azure_dir()`:
+File shares and ADLS filesystems have the additional feature of supporting directories. To create and delete directories, use `create_azure_dir()` and `delete_azure_dir()` for a file share, and `create_adls_dir()` and `delete_adls_dir()` for an ADLS filesystem.
 
 ```{r, eval=FALSE}
 list_azure_files(share, "/")
@@ -302,7 +307,5 @@ list_azure_files(share, "/")
 delete_azure_dir(share, "newdir")
 ```
 
-### Limitations
-
-Currently, the client interface for AzureStor only supports blob storage, file storage, and Azure Data Lake  storage gen 2. For blobs, only block-blob uploading is supported.
+For more information about the different types of storage, see the [Microsoft Docs site](https://docs.microsoft.com/en-us/azure/storage/). Note that there are other types of storage (queue, table) that do not have a client interface exposed by AzureStor.
 
