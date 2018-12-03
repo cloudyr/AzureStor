@@ -74,10 +74,10 @@ list_blob_containers(bl)
 library(magrittr)
 
 # create a new blob container and transfer a file
-priv <- bl %>% create_blob_container("privcontainer")
-priv %>% upload_blob("../downloads/test.file.gz", "test.gz")
-priv %>% list_blobs()
-priv %>% download_blob("test.gz", "../downloads/test.file2.gz")
+cont <- bl %>% create_blob_container("newcontainer")
+cont %>% upload_blob("../downloads/test.file.gz", "test.gz")
+cont %>% list_blobs()
+cont %>% download_blob("test.gz", "../downloads/test.file2.gz")
 
 # you can also do an authenticated download from a full URL
 download_from_url("https://rdevstor1.blob.core.windows.net/privcontainer/test.gz",
@@ -90,8 +90,8 @@ Accessing ADLSgen2 and file storage works much the same way, but with the additi
 ```r
 # get the file endpoint, either from the resource object or standalone
 ad <- rdevstor1$get_adls_endpoint()
-ad <- storage_endpoint("https://rdevstor1.file.core.windows.net", key="access_key")
-ad <- storage_endpoint("https://rdevstor1.file.core.windows.net", sas="my_sas")
+ad <- storage_endpoint("https://rdevstor1.dfs.core.windows.net", key="access_key")
+ad <- storage_endpoint("https://rdevstor1.dfs.core.windows.net", sas="my_sas")
 
 # ADLS filesystems are analogous to blob containers
 ad %>% list_adls_filesystems()
@@ -102,8 +102,8 @@ fs1 <- ad %>% create_file_filesystem("filesystem1")
 fs1 %>% list_adls_files("/")
 
 fs1 %>% create_adls_directory("foobar")
-sh1 %>% upload_adls_file("file.txt", "foobar/upload.txt")
-sh1 %>% download_adls_file("foobar/upload.txt", "file_dl.txt")
+fs1 %>% upload_adls_file("file.txt", "foobar/upload.txt")
+fs1 %>% download_adls_file("foobar/upload.txt", "file_dl.txt")
 ```
 
 ---
