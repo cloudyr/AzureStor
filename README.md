@@ -88,7 +88,7 @@ download_from_url("https://rdevstor1.blob.core.windows.net/privcontainer/test.gz
 Accessing ADLSgen2 and file storage works much the same way, but with the addition of being able to manipulate directories:
 
 ```r
-# get the file endpoint, either from the resource object or standalone
+# get the ADLSgen2 endpoint, either from the resource object or standalone
 ad <- rdevstor1$get_adls_endpoint()
 ad <- storage_endpoint("https://rdevstor1.dfs.core.windows.net", key="access_key")
 ad <- storage_endpoint("https://rdevstor1.dfs.core.windows.net", sas="my_sas")
