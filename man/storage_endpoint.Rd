@@ -13,7 +13,7 @@
 \title{Create a storage endpoint object}
 \usage{
 storage_endpoint(endpoint, key = NULL, token = NULL, sas = NULL,
-  api_version = getOption("azure_storage_api_version"))
+  api_version)
 
 blob_endpoint(endpoint, key = NULL, token = NULL, sas = NULL,
   api_version = getOption("azure_storage_api_version"))

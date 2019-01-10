@@ -63,7 +63,7 @@ do_storage_call <- function(endpoint_url, path, options=list(), headers=list(), 
 
 add_token <- function(token, headers)
 {
-    if(is_azure_token(token))
+    if(inherits(token, "R6") && inherits(token, "AzureToken"))
     {
         # if token has expired, renew it
         if(!token$validate())
