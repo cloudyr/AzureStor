@@ -37,14 +37,21 @@
 #' }
 #' @aliases endpoint blob_endpoint file_endpoint queue_endpoint table_endpoint
 #' @export
-storage_endpoint <- function(endpoint, key=NULL, token=NULL, sas=NULL,
-                             api_version=getOption("azure_storage_api_version"))
+storage_endpoint <- function(endpoint, key=NULL, token=NULL, sas=NULL, api_version)
 {
     type <- sapply(c("blob", "file", "queue", "table", "adls"),
                    function(x) is_endpoint_url(endpoint, x))
     if(!any(type))
         stop("Unknown endpoint type", call.=FALSE)
     type <- names(type)[type]
+
+    # handle api version wart
+    if(missing(api_version))
+    {
+        api_version <- if(type == "adls")
+            getOption("azure_adls_api_version")
+        else getOption("azure_storage_api_version")
+    }
 
     if(type == "adls" && !is_empty(sas))
         warning("ADLSgen2 does not support authentication with a shared access signature")

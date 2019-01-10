@@ -194,10 +194,10 @@ is_endpoint_url <- function(url, type)
 }
 
 
-generate_endpoint_container <- function(url, key, sas, api_version)
+generate_endpoint_container <- function(url, key, token, sas, api_version)
 {
     stor_path <- parse_storage_url(url)
-    endpoint <- storage_endpoint(stor_path[1], key, sas, api_version)
+    endpoint <- storage_endpoint(stor_path[1], key, token, sas, api_version)
     name <- stor_path[2]
     list(endpoint=endpoint, name=name)
 }
