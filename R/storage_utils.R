@@ -29,7 +29,7 @@ do_storage_call <- function(endpoint_url, path, options=list(), headers=list(), 
     if(!is.null(key))
         headers <- sign_request(key, verb, url, headers, api_version)
     else if(!is.null(token))
-        headers <- add_token(token, headers)
+        headers <- add_token(token, headers, api_version)
     else if(!is.null(sas))
         url <- add_sas(sas, url)
 
@@ -61,8 +61,11 @@ do_storage_call <- function(endpoint_url, path, options=list(), headers=list(), 
 }
 
 
-add_token <- function(token, headers)
+add_token <- function(token, headers, api)
 {
+    if(is.null(headers$`x-ms-version`))
+        headers$`x-ms-version` <- api
+
     if(inherits(token, "R6") && inherits(token, "AzureToken"))
     {
         # if token has expired, renew it

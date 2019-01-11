@@ -90,10 +90,10 @@ print.blob_container <- function(x, ...)
 
     if(!is_empty(x$endpoint$token))
     {
-        cat("Access token:\n")
+        cat("Azure Active Directory access token:\n")
         print(x$endpoint$token)
     }
-    else cat("Access token: <none supplied>")
+    else cat("Azure Active Directory access token: <none supplied>\n")
 
     if(!is_empty(x$endpoint$sas))
         cat("Account shared access signature: <hidden>\n")
