@@ -306,56 +306,24 @@ list_blobs <- function(container, info=c("partial", "name", "all"),
 
 #' @rdname blob
 #' @export
-upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL)
+upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                        use_azcopy=FALSE)
 {
-    if(type != "BlockBlob")
-        stop("Only block blobs currently supported")
-    content_type <- if(inherits(src, "connection"))
-        "application/octet-stream"
-    else mime::guess_type(src)
+    if(use_azcopy)
+        call_azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
+    else upload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease)
+}
 
-    headers <- list("x-ms-blob-type"=type)
-    if(!is.null(lease))
-        headers[["x-ms-lease-id"]] <- as.character(lease)
-
-    con <- if(inherits(src, "textConnection"))
-        rawConnection(charToRaw(paste0(readLines(src), collapse="\n")))
-    else if(inherits(src, "rawConnection"))
-        src
-    else file(src, open="rb")
-    on.exit(close(con))
-
-    # upload each block
-    blocklist <- list()
-    i <- 1
-    while(1)
-    {
-        body <- readBin(con, "raw", blocksize)
-        thisblock <- length(body)
-        if(thisblock == 0)
-            break
-
-        # ensure content-length is never exponential notation
-        headers[["content-length"]] <- sprintf("%.0f", thisblock)
-        id <- openssl::base64_encode(sprintf("%s-%010d", dest, i))
-        opts <- list(comp="block", blockid=id)
-
-        do_container_op(container, dest, headers=headers, body=body, options=opts, http_verb="PUT")
-
-        blocklist <- c(blocklist, list(Latest=list(id)))
-        i <- i + 1
-    }
-
-    # update block list
-    body <- as.character(xml2::as_xml_document(list(BlockList=blocklist)))
-    headers <- list("content-length"=nchar(body))
-    do_container_op(container, dest, headers=headers, body=body, options=list(comp="blocklist"),
-                    http_verb="PUT")
-
-    # set content type
-    do_container_op(container, dest, headers=list("x-ms-blob-content-type"=content_type),
-                    options=list(comp="properties"),
-                    http_verb="PUT")
+#' @rdname blob
+#' @export
+multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                             use_azcopy=FALSE,
+                             max_concurrent_transfers=10)
+{
+    if(use_azcopy)
+        call_azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
+    else multiupload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
+                                   max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob

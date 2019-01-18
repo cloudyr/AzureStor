@@ -1,0 +1,84 @@
+multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                                      use_azcopy=FALSE,
+                                      max_concurrent_transfers=10)
+{
+    if(use_azcopy)
+        return(call_azcopy_upload(src, dest=dest, type=type, blocksize=blocksize, lease=lease))
+
+    src_dir <- dirname(src)
+    src_files <- glob2rx(basename(src))
+    src <- dir(src_dir, pattern=src_files, full.names=TRUE)
+    if(length(src) == 1)
+        return(upload_blob(container, src, dest, type=type, blocksize=blocksize, lease=NULL))
+
+    if(!missing(dest))
+        warning("multiupload_blob does not use the 'dest' argument")
+
+    start_cluster()
+    clean_cluster()
+
+    parallel::clusterExport(.AzureStor$clus,
+        c("container", "type", "blocksize", "lease"),
+        envir=environment())
+    parallel::parSapply(.AzureStor$clus, src, function(f)
+    {
+        AzureRMR::upload_blob(container, f, basename(f), type=type, blocksize=blocksize, lease=lease,
+            use_azcopy=FALSE)
+    })
+    invisible(NULL)
+}
+
+upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL)
+{
+    if(type != "BlockBlob")
+        stop("Only block blobs currently supported")
+    content_type <- if(inherits(src, "connection"))
+        "application/octet-stream"
+    else mime::guess_type(src)
+
+    headers <- list("x-ms-blob-type"=type)
+    if(!is.null(lease))
+        headers[["x-ms-lease-id"]] <- as.character(lease)
+
+    con <- if(inherits(src, "textConnection"))
+        rawConnection(charToRaw(paste0(readLines(src), collapse="\n")))
+    else if(inherits(src, "rawConnection"))
+        src
+    else file(src, open="rb")
+    on.exit(close(con))
+
+    # upload each block
+    blocklist <- list()
+    i <- 1
+    while(1)
+    {
+        body <- readBin(con, "raw", blocksize)
+        thisblock <- length(body)
+        if(thisblock == 0)
+            break
+
+        # ensure content-length is never exponential notation
+        headers[["content-length"]] <- sprintf("%.0f", thisblock)
+        id <- openssl::base64_encode(sprintf("%s-%010d", dest, i))
+        opts <- list(comp="block", blockid=id)
+
+        do_container_op(container, dest, headers=headers, body=body, options=opts, http_verb="PUT")
+
+        blocklist <- c(blocklist, list(Latest=list(id)))
+        i <- i + 1
+    }
+
+    # update block list
+    body <- as.character(xml2::as_xml_document(list(BlockList=blocklist)))
+    headers <- list("content-length"=nchar(body))
+    do_container_op(container, dest, headers=headers, body=body, options=list(comp="blocklist"),
+                    http_verb="PUT")
+
+    # set content type
+    do_container_op(container, dest, headers=list("x-ms-blob-content-type"=content_type),
+                    options=list(comp="properties"),
+                    http_verb="PUT")
+}
+
+call_azcopy_upload <- function(...) stop("Not yet implemented")
+
