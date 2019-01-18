@@ -1,10 +1,6 @@
-multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
-                                      use_azcopy=FALSE,
-                                      max_concurrent_transfers=10)
+parallel_upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                                          max_concurrent_transfers=10)
 {
-    if(use_azcopy)
-        return(call_azcopy_upload(src, dest=dest, type=type, blocksize=blocksize, lease=lease))
-
     src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
     src <- dir(src_dir, pattern=src_files, full.names=TRUE)
@@ -14,7 +10,7 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
     if(!missing(dest))
         warning("multiupload_blob does not use the 'dest' argument")
 
-    start_cluster()
+    start_cluster(max_concurrent_transfers)
     clean_cluster()
 
     parallel::clusterExport(.AzureStor$clus,
@@ -27,6 +23,7 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
     })
     invisible(NULL)
 }
+
 
 upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL)
 {
@@ -80,5 +77,55 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
                     http_verb="PUT")
 }
 
-call_azcopy_upload <- function(...) stop("Not yet implemented")
 
+parallel_download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL,
+                                            max_concurrent_transfers=10)
+{
+    files <- list_blobs(container, info="name")
+
+    src_files <- glob2rx(basename(src))
+    src <- grep(src_files, files, value=TRUE)
+    if(length(src) == 1)
+        return(download_blob(container, src, dest, type=type, blocksize=blocksize, lease=NULL))
+
+    if(!missing(dest))
+        warning("multiupload_blob does not use the 'dest' argument")
+
+    start_cluster(max_concurrent_transfers)
+    clean_cluster()
+
+    parallel::clusterExport(.AzureStor$clus,
+        c("container", "overwrite", "lease"),
+        envir=environment())
+    parallel::parSapply(.AzureStor$clus, src, function(f)
+    {
+        AzureRMR::download_blob(container, f, basename(f), type=type, blocksize=blocksize, lease=lease,
+            use_azcopy=FALSE)
+    })
+    invisible(NULL)
+}
+
+
+download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL)
+{
+    headers <- list()
+    if(!is.null(lease))
+        headers[["x-ms-lease-id"]] <- as.character(lease)
+    do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite))
+}
+
+
+call_azcopy_upload <- function(...)
+{
+    if(.AzureStor$azcopy == "")
+        stop("azcopy version 10+ required but not found")
+    else stop("Not yet implemented")
+}
+
+
+call_azcopy_download <- function(...)
+{
+    if(.AzureStor$azcopy == "")
+        stop("azcopy version 10+ required but not found")
+    else stop("Not yet implemented")
+}

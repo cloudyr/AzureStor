@@ -316,24 +316,35 @@ upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, 
 
 #' @rdname blob
 #' @export
-multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
-                             use_azcopy=FALSE,
-                             max_concurrent_transfers=10)
+parallel_upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                                 use_azcopy=FALSE,
+                                 max_concurrent_transfers=10)
 {
     if(use_azcopy)
         call_azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
-    else multiupload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
-                                   max_concurrent_transfers=max_concurrent_transfers)
+    else parallel_upload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
+                                       max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob
 #' @export
-download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL)
+download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE)
 {
-    headers <- list()
-    if(!is.null(lease))
-        headers[["x-ms-lease-id"]] <- as.character(lease)
-    do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite))
+    if(use_azcopy)
+        call_azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
+    else download_blob_internal(container, src, dest, overwrite=FALSE, lease=NULL)
+}
+
+#' @rdname blob
+#' @export
+parallel_download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE,
+                                   use_azcopy=FALSE,
+                                   max_concurrent_transfers=10)
+{
+    if(use_azcopy)
+        call_azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
+    else parallel_download_blob_internal(container, src, dest, overwrite=FALSE, lease=NULL,
+                                         max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob

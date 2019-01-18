@@ -10,15 +10,17 @@ globalVariables("self", "AzureStor")
 .onLoad <- function(libname, pkgname)
 {
     .AzureStor$azcopy <- find_azcopy()
+    if(.AzureStor$azcopy != "")
+        packageStartupMessage("azcopy version 10+ binary found at ", .AzureStor$azcopy)
 }
 
 
 find_azcopy <- function()
 {
     path <- Sys.which("azcopy")
-    # we need version 10 or later
     if(path != "")
     {
+        # we need version 10 or later
         ver <- system2(path, "--version", stdout=TRUE)
         if(!grepl("version 1[[:digit:]]", ver, ignore.case=TRUE))
             path <- ""
@@ -27,3 +29,15 @@ find_azcopy <- function()
 }
 
 
+set_azcopy_path <- function(path)
+{
+    if(Sys.which(path) == "")
+        stop("azcopy binary not found")
+    
+    ver <- system2(path, "--version", stdout=TRUE)
+    if(!grepl("version 1[[:digit:]]", ver, ignore.case=TRUE))
+        stop("azcopy version 10+ required but not found")
+
+    .AzureStor$azcopy <- path
+    invisible(path)
+}
