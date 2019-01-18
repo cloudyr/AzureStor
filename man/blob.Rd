@@ -3,17 +3,27 @@
 \name{list_blobs}
 \alias{list_blobs}
 \alias{upload_blob}
+\alias{multiupload_blob}
 \alias{download_blob}
+\alias{multidownload_blob}
 \alias{delete_blob}
-\title{Operations on a blob container}
+\title{Operations on a blob container or blob}
 \usage{
 list_blobs(container, info = c("partial", "name", "all"),
   prefix = NULL)
 
 upload_blob(container, src, dest, type = "BlockBlob", blocksize = 2^24,
-  lease = NULL)
+  lease = NULL, use_azcopy = FALSE)
 
-download_blob(container, src, dest, overwrite = FALSE, lease = NULL)
+multiupload_blob(container, src, dest, type = "BlockBlob",
+  blocksize = 2^24, lease = NULL, use_azcopy = FALSE,
+  max_concurrent_transfers = 10)
+
+download_blob(container, src, dest, overwrite = FALSE, lease = NULL,
+  use_azcopy = FALSE)
+
+multidownload_blob(container, src, dest, overwrite = FALSE,
+  lease = NULL, use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 delete_blob(container, blob, confirm = TRUE)
 }
@@ -32,6 +42,10 @@ delete_blob(container, blob, confirm = TRUE)
 
 \item{lease}{The lease for a blob, if present.}
 
+\item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R. Not yet implemented.}
+
+\item{max_concurrent_transfers}{For \code{multiupload_blob} and \code{multidownload_blob}, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.}
+
 \item{overwrite}{When downloading, whether to overwrite an existing destination file.}
 
 \item{blob}{A string naming a blob.}
@@ -43,6 +57,11 @@ For \code{list_blobs}, details on the blobs in the container.
 }
 \description{
 Upload, download, or delete a blob; list blobs in a container.
+}
+\details{
+\code{upload_blob} and \code{download_blob} are the workhorse file transfer functions for blobs. They each take as inputs a \emph{single} filename or connection as the source for uploading/downloading, and a single filename as the destination.
+
+\code{multiupload_blob and}multidownload_blob\code{are functions for uploading and downloading _multiple_ blobs at once. They parallelise file transfers by deploying a cluster of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source. The}dest` argument should be a directory for downloading, and is not used for uploading.
 }
 \examples{
 \dontrun{
@@ -65,8 +84,14 @@ rds <- serialize(iris, NULL)
 con <- rawConnection(rds)
 upload_blob(cont, con, "iris.rds")
 
+# uploading/downloading multiple files at once
+multiupload_blob(cont, "/data/logfiles/*.zip")
+multidownload_blob(cont, "jan*.*", "/data/january")
+
 }
 }
 \seealso{
 \link{blob_container}, \link{az_storage}
+
+\href{https://github.com/Azure/azure-storage-azcopy}{AzCopy version 10 on GitHub}
 }

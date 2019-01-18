@@ -218,7 +218,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 }
 
 
-#' Operations on a blob container
+#' Operations on a blob container or blob
 #'
 #' Upload, download, or delete a blob; list blobs in a container.
 #'
@@ -231,13 +231,22 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param lease The lease for a blob, if present.
 #' @param type When uploading, the type of blob to create. Currently only block blobs are supported.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
+#' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R. Not yet implemented.
+#' @param max_concurrent_transfers For `multiupload_blob` and `multidownload_blob`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
 #' @param prefix For `list_blobs`, filters the result to return only blobs whose name begins with this prefix.
+#'
+#' @details
+#' `upload_blob` and `download_blob` are the workhorse file transfer functions for blobs. They each take as inputs a _single_ filename or connection as the source for uploading/downloading, and a single filename as the destination.
+#'
+#' `multiupload_blob and `multidownload_blob` are functions for uploading and downloading _multiple_ blobs at once. They parallelise file transfers by deploying a cluster of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source. The `dest` argument should be a directory for downloading, and is not used for uploading.
 #'
 #' @return
 #' For `list_blobs`, details on the blobs in the container.
 #'
 #' @seealso
 #' [blob_container], [az_storage]
+#'
+#' [AzCopy version 10 on GitHub](https://github.com/Azure/azure-storage-azcopy)
 #'
 #' @examples
 #' \dontrun{
@@ -259,6 +268,10 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' rds <- serialize(iris, NULL)
 #' con <- rawConnection(rds)
 #' upload_blob(cont, con, "iris.rds")
+#'
+#' # uploading/downloading multiple files at once
+#' multiupload_blob(cont, "/data/logfiles/*.zip")
+#' multidownload_blob(cont, "jan*.*", "/data/january")
 #'
 #' }
 #' @rdname blob
@@ -332,18 +345,18 @@ download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use
 {
     if(use_azcopy)
         call_azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else download_blob_internal(container, src, dest, overwrite=FALSE, lease=NULL)
+    else download_blob_internal(container, src, dest, overwrite=overwrite, lease=lease)
 }
 
 #' @rdname blob
 #' @export
-multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE,
+multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL,
                                use_azcopy=FALSE,
                                max_concurrent_transfers=10)
 {
     if(use_azcopy)
         call_azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else multidownload_blob_internal(container, src, dest, overwrite=FALSE, lease=NULL,
+    else multidownload_blob_internal(container, src, dest, overwrite=overwrite, lease=lease,
                                      max_concurrent_transfers=max_concurrent_transfers)
 }
 

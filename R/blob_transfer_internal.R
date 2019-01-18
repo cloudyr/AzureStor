@@ -5,10 +5,10 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
     src_files <- glob2rx(basename(src))
     src <- dir(src_dir, pattern=src_files, full.names=TRUE)
     if(length(src) == 1)
-        return(upload_blob(container, src, dest, type=type, blocksize=blocksize, lease=NULL))
+        return(upload_blob(container, src, dest, type=type, blocksize=blocksize, lease=lease))
 
     if(!missing(dest))
-        warning("multiupload_blob does not use the 'dest' argument")
+        warning("Internal multiupload_blob implementation does not use the 'dest' argument")
 
     start_cluster(max_concurrent_transfers)
     clean_cluster()
@@ -86,20 +86,18 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
     src_files <- glob2rx(basename(src))
     src <- grep(src_files, files, value=TRUE)
     if(length(src) == 1)
-        return(download_blob(container, src, dest, type=type, blocksize=blocksize, lease=NULL))
-
-    if(!missing(dest))
-        warning("multiupload_blob does not use the 'dest' argument")
+        return(download_blob(container, src, dest, overwrite=overwrite, lease=lease))
 
     start_cluster(max_concurrent_transfers)
     clean_cluster()
 
     parallel::clusterExport(.AzureStor$clus,
-        c("container", "overwrite", "lease"),
+        c("container", "dest", "overwrite", "lease"),
         envir=environment())
     parallel::parSapply(.AzureStor$clus, src, function(f)
     {
-        AzureRMR::download_blob(container, f, basename(f), type=type, blocksize=blocksize, lease=lease,
+        dest <- file.path(dest, basename(f))
+        AzureRMR::download_blob(container, f, dest, overwrite=overwrite, lease=lease,
             use_azcopy=FALSE)
     })
     invisible(NULL)

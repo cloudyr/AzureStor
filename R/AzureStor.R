@@ -1,8 +1,8 @@
 #' @import AzureRMR
-#' @importFrom utils URLencode modifyList packageVersion
+#' @importFrom utils URLencode modifyList packageVersion glob2rx
 NULL
 
-globalVariables("self", "AzureStor")
+globalVariables(c("self", "clus"), "AzureStor")
 
 .AzureStor <- new.env()
 
@@ -10,6 +10,14 @@ globalVariables("self", "AzureStor")
 .onLoad <- function(libname, pkgname)
 {
     .AzureStor$azcopy <- find_azcopy()
+
+    # all methods extending classes in external package must go in .onLoad
+    add_methods()
+}
+
+
+.onAttach <- function(libname, pkgname)
+{
     if(.AzureStor$azcopy != "")
         packageStartupMessage("azcopy version 10+ binary found at ", .AzureStor$azcopy)
 }
