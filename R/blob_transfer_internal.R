@@ -1,5 +1,5 @@
-parallel_upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
-                                          max_concurrent_transfers=10)
+multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                                      max_concurrent_transfers=10)
 {
     src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
@@ -78,8 +78,8 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
 }
 
 
-parallel_download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL,
-                                            max_concurrent_transfers=10)
+multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL,
+                                        max_concurrent_transfers=10)
 {
     files <- list_blobs(container, info="name")
 

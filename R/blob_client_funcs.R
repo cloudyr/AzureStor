@@ -316,14 +316,14 @@ upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, 
 
 #' @rdname blob
 #' @export
-parallel_upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
-                                 use_azcopy=FALSE,
-                                 max_concurrent_transfers=10)
+multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+                             use_azcopy=FALSE,
+                             max_concurrent_transfers=10)
 {
     if(use_azcopy)
         call_azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
-    else parallel_upload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
-                                       max_concurrent_transfers=max_concurrent_transfers)
+    else multiupload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
+                                   max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob
@@ -337,14 +337,14 @@ download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use
 
 #' @rdname blob
 #' @export
-parallel_download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE,
-                                   use_azcopy=FALSE,
-                                   max_concurrent_transfers=10)
+multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE,
+                               use_azcopy=FALSE,
+                               max_concurrent_transfers=10)
 {
     if(use_azcopy)
         call_azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else parallel_download_blob_internal(container, src, dest, overwrite=FALSE, lease=NULL,
-                                         max_concurrent_transfers=max_concurrent_transfers)
+    else multidownload_blob_internal(container, src, dest, overwrite=FALSE, lease=NULL,
+                                     max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob
