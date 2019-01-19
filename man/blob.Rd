@@ -53,7 +53,7 @@ delete_blob(container, blob, confirm = TRUE)
 \item{confirm}{Whether to ask for confirmation on deleting a blob.}
 }
 \value{
-For \code{list_blobs}, details on the blobs in the container.
+For \code{list_blobs}, details on the blobs in the container. For \code{download_blob}, if \code{dest=NULL}, the contents of the downloaded blob as a raw vector.
 }
 \description{
 Upload, download, or delete a blob; list blobs in a container.
@@ -61,7 +61,7 @@ Upload, download, or delete a blob; list blobs in a container.
 \details{
 \code{upload_blob} and \code{download_blob} are the workhorse file transfer functions for blobs. They each take as inputs a \emph{single} filename or connection as the source for uploading/downloading, and a single filename as the destination.
 
-\code{multiupload_blob} and \code{multidownload_blob} are functions for uploading and downloading \emph{multiple} blobs at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source. The \code{dest} argument should be a directory for downloading, and is not used for uploading.
+\code{multiupload_blob} and \code{multidownload_blob} are functions for uploading and downloading \emph{multiple} blobs at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source, which expands to one or more files. The \code{dest} argument should be a directory for downloading, and is not used for uploading.
 
 The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object. For downloading, \code{dest} can be NULL or a \code{rawConnection} object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 }

@@ -25,7 +25,15 @@ init_pool <- function(max_concurrent_transfers=10, restart=FALSE, ...)
         .AzureStor$pool <- parallel::makeCluster(max_concurrent_transfers)
         parallel::clusterEvalQ(.AzureStor$pool, loadNamespace("AzureStor"))
     }
-    else parallel::clusterEvalQ(.AzureStor$pool, rm(list=ls(all.names=TRUE)))
+    else
+    {
+        # restore original state, set working directory to master working directory
+        parallel::clusterCall(.AzureStor$pool, function(wd)
+        {
+            setwd(wd)
+            rm(list=ls(all.names=TRUE), envir=.GlobalEnv)
+        }, wd=getwd())
+    }
 
     invisible(NULL)
 }

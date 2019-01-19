@@ -201,12 +201,17 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R. Not yet implemented.
 #' @param prefix For `list_azure_files`, filters the result to return only files and directories whose name begins with this prefix.
 #'
+#' @details
+#' `upload_azure_file` and `download_azure_file` are the workhorse file transfer functions for file storage. They each take as inputs a _single_ filename or connection as the source for uploading/downloading, and a single filename as the destination.
+#'
+#' `multiupload_azure_file` and `multidownload_azure_file` are functions for uploading and downloading _multiple_ files at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a _wildcard_ pattern as the source, which expands to one or more files. The `dest` argument should be a directory.
+#'
+#' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
+#'
 #' @return
 #' For `list_azure_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
 #'
-#' `multiupload_azure_file` and `multidownload_azure_file` are functions for uploading and downloading _multiple_ files at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source. The `dest` argument should be a directory.
-#'
-#' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
+#' For `download_azure_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
 #'
 #' @seealso
 #' [file_share], [az_storage]
@@ -230,7 +235,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #'
 #' # uploading/downloading multiple files at once
 #' multiupload_azure_file(share, "/data/logfiles/*.zip")
-#' multidownload_azure_file(share, "jan*.*", "/data/january")
+#' multidownload_azure_file(share, "/monthly/jan*.*", "/data/january")
 #'
 #' # uploading serialized R objects via connections
 #' json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)

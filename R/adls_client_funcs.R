@@ -215,8 +215,17 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param recursive For `list_adls_files`, and `delete_adls_dir`, whether the operation should recurse through subdirectories. For `delete_adls_dir`, this must be TRUE to delete a non-empty directory.
 #'
+#' @details
+#' `upload_adls_file` and `download_adls_file` are the workhorse file transfer functions for ADLSgen2 storage. They each take as inputs a _single_ filename or connection as the source for uploading/downloading, and a single filename as the destination.
+#'
+#' `multiupload_adls_file` and `multidownload_adls_file` are functions for uploading and downloading _multiple_ files at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a _wildcard_ pattern as the source, which expands to one or more files. The `dest` argument should be a directory.
+#'
+#' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
+#'
 #' @return
 #' For `list_adls_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
+#'
+#' For `download_adls_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
 #'
 #' @seealso
 #' [adls_filesystem], [az_storage]
@@ -236,6 +245,10 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' delete_adls_file(fs, "/newdir/bigfile.zip")
 #' delete_adls_dir(fs, "/newdir")
 #'
+#' # uploading/downloading multiple files at once
+#' multiupload_adls_file(fs, "/data/logfiles/*.zip")
+#' multidownload_adls_file(fs, "/monthly/jan*.*", "/data/january")
+#'
 #' # uploading serialized R objects via connections
 #' json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)
 #' con <- textConnection(json)
@@ -244,6 +257,14 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' rds <- serialize(iris, NULL)
 #' con <- rawConnection(rds)
 #' upload_adls_file(fs, con, "iris.rds")
+#'
+#' # downloading files into memory: as a raw vector, and via a connection
+#' rawvec <- download_adls_file(fs, "iris.json", NULL)
+#' rawToChar(rawvec)
+#'
+#' con <- rawConnection(raw(0), "r+")
+#' download_adls_file(fs, "iris.json", con)
+#' unserialize(con)
 #'
 #' }
 #' @rdname adls
@@ -294,74 +315,49 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
 }
 
 
-#' @rdname adls
+#' @rdname file
 #' @export
-upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
+multiupload_adls_file <- function(share, src, dest, blocksize=2^22, lease=NULL,
+                                   use_azcopy=FALSE,
+                                   max_concurrent_transfers=10)
 {
-    con <- if(inherits(src, "textConnection"))
-        rawConnection(charToRaw(paste0(readLines(src), collapse="\n")))
-    else if(inherits(src, "rawConnection"))
-        src
-    else file(src, open="rb")
-    on.exit(close(con))
-
-    # create the file
-    content_type <- if(inherits(src, "connection"))
-        "application/octet-stream"
-    else mime::guess_type(src)
-    headers <- list(`x-ms-content-type`=content_type)
-    #if(!is.null(lease))
-        #headers[["x-ms-lease-id"]] <- as.character(lease)
-    do_container_op(filesystem, dest, options=list(resource="file"), headers=headers, http_verb="PUT")
-
-    # transfer the contents
-    blocklist <- list()
-    pos <- 0
-    while(1)
-    {
-        body <- readBin(con, "raw", blocksize)
-        thisblock <- length(body)
-        if(thisblock == 0)
-            break
-
-        headers <- list(
-            `content-type`="application/octet-stream",
-            `content-length`=sprintf("%.0f", thisblock)
-        )
-        opts <- list(action="append", position=sprintf("%.0f", pos))
-
-        do_container_op(filesystem, dest, options=opts, headers=headers, body=body, http_verb="PATCH")
-        pos <- pos + thisblock
-    }
-
-    # flush contents
-    do_container_op(filesystem, dest,
-        options=list(action="flush", position=sprintf("%.0f", pos)),
-        http_verb="PATCH")
+    if(use_azcopy)
+        call_azcopy_upload(share, src, dest, blocksize=blocksize, lease=lease)
+    else multiupload_adls_file_internal(share, src, dest, blocksize=blocksize, lease=lease,
+                                        max_concurrent_transfers=max_concurrent_transfers)
 }
 
 
 #' @rdname adls
 #' @export
-download_adls_file <- function(filesystem, src, dest, overwrite=FALSE)
+upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL, use_azcopy=FALSE)
 {
-    if(is.character(dest))
-        return(do_container_op(filesystem, src, config=httr::write_disk(dest, overwrite)))
+    if(use_azcopy)
+        call_azcopy_upload(filesystem, src, dest, blocksize=blocksize, lease=lease)
+    else upload_adls_file_internal(filesystem, src, dest, blocksize=blocksize, lease=lease)
+}
 
-    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    cont <- httr::content(do_container_op(filesystem, src, http_status_handler="pass"),
-                          as="raw")
-    if(is.null(dest))
-        return(cont)
 
-    if(inherits(dest, "rawConnection"))
-    {
-        writeBin(cont, dest)
-        seek(dest, 0)
-        invisible(NULL)
-    }
-    else stop("Unrecognised dest argument", call.=FALSE)
+#' @rdname file
+#' @export
+multidownload_adls_file <- function(filesystem, src, dest, overwrite=FALSE,
+                                    use_azcopy=FALSE,
+                                    max_concurrent_transfers=10)
+{
+    if(use_azcopy)
+        call_azcopy_upload(filesystem, src, dest, overwrite=overwrite)
+    else multidownload_adls_file_internal(filesystem, src, dest, overwrite=overwrite,
+                                          max_concurrent_transfers=max_concurrent_transfers)
+}
 
+
+#' @rdname adls
+#' @export
+download_adls_file <- function(filesystem, src, dest, overwrite=FALSE, use_azcopy=FALSE)
+{
+    if(use_azcopy)
+        call_azcopy_download(filesystem, src, dest, overwrite=overwrite)
+    else download_adls_file_internal(filesystem, src, dest, overwrite=overwrite)
 }
 
 

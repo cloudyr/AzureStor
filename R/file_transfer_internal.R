@@ -92,14 +92,14 @@ upload_azure_file_internal <- function(share, src, dest, blocksize=2^22)
 
 multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE, max_concurrent_transfers=10)
 {
-    files <- list_azure_files(share, dirname(src), info="name")
-
     src_files <- glob2rx(basename(src))
     src_dir <- dirname(src)
     if(src_dir == ".")
         src_dir <- "/"
 
-    src <- file.path(src_dir, grep(src_files, files, value=TRUE))
+    files <- list_azure_files(share, src_dir, info="name")
+
+    src <- sub("//", "/", file.path(src_dir, grep(src_files, files, value=TRUE)))
     if(length(src) == 1)
         return(download_azure_file(share, src, dest, overwrite=overwrite))
 

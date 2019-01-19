@@ -144,14 +144,15 @@ test_that("File client interface works",
     # multiple file transfers
     files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
     filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    suppressWarnings(file.remove(filenames))
     mapply(writeLines, files, filenames)
 
     create_azure_dir(share, "multi")
     multiupload_azure_file(share, file.path(tempdir(), "multitransfer_*"), "multi")
 
-    dest_dir <- file.path(tempdir(), "AzureStor_multitransfer")
-    if(!dir.exists(dest_dir))
-        dir.create(dest_dir)
+    dest_dir <- file.path(tempdir(), "file_multitransfer")
+    suppressWarnings(unlink(dest_dir, recursive=TRUE))
+    dir.create(dest_dir)
     multidownload_azure_file(share, "multi/multitransfer_*", dest_dir, overwrite=TRUE)
 
     expect_true(all(sapply(filenames, function(f)

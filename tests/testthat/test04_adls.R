@@ -130,6 +130,27 @@ test_that("ADLSgen2 client interface works",
     iris3 <- as.data.frame(jsonlite::fromJSON(con))
     expect_identical(iris, iris3)
 
+    # multiple file transfers
+    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
+    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    suppressWarnings(file.remove(filenames))
+    mapply(writeLines, files, filenames)
+
+    create_adls_dir(fs, "multi")
+    multiupload_adls_file(fs, file.path(tempdir(), "multitransfer_*"), "multi")
+
+    dest_dir <- file.path(tempdir(), "adls_multitransfer")
+    suppressWarnings(unlink(dest_dir, recursive=TRUE))
+    dir.create(dest_dir)
+    multidownload_adls_file(fs, "multi/multitransfer_*", dest_dir, overwrite=TRUE)
+
+    expect_true(all(sapply(filenames, function(f)
+    {
+        src <- readBin(f, "raw", n=1e5)
+        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
+        identical(src, dest)
+    })))
+
     # ways of deleting a filesystem
     delete_adls_filesystem(fs, confirm=FALSE)
     delete_adls_filesystem(ad, "newfs2", confirm=FALSE)
