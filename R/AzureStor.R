@@ -2,7 +2,7 @@
 #' @importFrom utils URLencode modifyList packageVersion glob2rx
 NULL
 
-globalVariables(c("self", "clus"), "AzureStor")
+globalVariables(c("self", "pool"), "AzureStor")
 
 .AzureStor <- new.env()
 
@@ -18,8 +18,8 @@ globalVariables(c("self", "clus"), "AzureStor")
 
 .onUnload <- function(libpath)
 {
-    if(exists("clus", envir=.AzureStor) && inherits(.AzureStor$clus, "cluster"))
-        suppressWarnings(parallel::stopCluster(.AzureStor$clus))
+    if(exists("pool", envir=.AzureStor))
+        try(parallel::stopCluster(.AzureStor$pool), silent=TRUE)
 }
 
 

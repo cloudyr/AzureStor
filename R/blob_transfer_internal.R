@@ -10,13 +10,12 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
     if(!missing(dest))
         warning("Internal multiupload_blob implementation does not use the 'dest' argument")
 
-    start_cluster(max_concurrent_transfers)
-    clean_cluster()
+    init_pool(max_concurrent_transfers)
 
-    parallel::clusterExport(.AzureStor$clus,
+    parallel::clusterExport(.AzureStor$pool,
         c("container", "type", "blocksize", "lease"),
         envir=environment())
-    parallel::parSapply(.AzureStor$clus, src, function(f)
+    parallel::parSapply(.AzureStor$pool, src, function(f)
     {
         AzureStor::upload_blob(container, f, basename(f), type=type, blocksize=blocksize, lease=lease)
     })
@@ -87,13 +86,12 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
     if(length(src) == 1)
         return(download_blob(container, src, dest, overwrite=overwrite, lease=lease))
 
-    start_cluster(max_concurrent_transfers)
-    clean_cluster()
+    init_pool(max_concurrent_transfers)
 
-    parallel::clusterExport(.AzureStor$clus,
+    parallel::clusterExport(.AzureStor$pool,
         c("container", "dest", "overwrite", "lease"),
         envir=environment())
-    parallel::parSapply(.AzureStor$clus, src, function(f)
+    parallel::parSapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
         AzureStor::download_blob(container, f, dest, overwrite=overwrite, lease=lease)
