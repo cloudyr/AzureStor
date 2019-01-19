@@ -34,7 +34,7 @@ delete_blob(container, blob, confirm = TRUE)
 
 \item{prefix}{For \code{list_blobs}, filters the result to return only blobs whose name begins with this prefix.}
 
-\item{src, dest}{The source and destination files for uploading and downloading. For uploading, \code{src} can also be a \link{textConnection} or \link{rawConnection} object to allow transferring in-memory R objects without creating a temporary file.}
+\item{src, dest}{The source and destination files for uploading and downloading. See 'Details' below.For uploading, \code{src} can also be a \link{textConnection} or \link{rawConnection} object to allow transferring in-memory R objects without creating a temporary file. For downloading,}
 
 \item{type}{When uploading, the type of blob to create. Currently only block blobs are supported.}
 
@@ -62,6 +62,8 @@ Upload, download, or delete a blob; list blobs in a container.
 \code{upload_blob} and \code{download_blob} are the workhorse file transfer functions for blobs. They each take as inputs a \emph{single} filename or connection as the source for uploading/downloading, and a single filename as the destination.
 
 \code{multiupload_blob and}multidownload_blob\code{are functions for uploading and downloading _multiple_ blobs at once. They parallelise file transfers by deploying a cluster of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source. The}dest` argument should be a directory for downloading, and is not used for uploading.
+
+The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object. For downloading, \code{dest} can be NULL or a \code{rawConnection} object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 }
 \examples{
 \dontrun{
@@ -75,6 +77,10 @@ download_blob(cont, "bigfile.zip", dest="~/bigfile_downloaded.zip")
 
 delete_blob(cont, "bigfile.zip")
 
+# uploading/downloading multiple files at once
+multiupload_blob(cont, "/data/logfiles/*.zip")
+multidownload_blob(cont, "jan*.*", "/data/january")
+
 # uploading serialized R objects via connections
 json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)
 con <- textConnection(json)
@@ -84,9 +90,13 @@ rds <- serialize(iris, NULL)
 con <- rawConnection(rds)
 upload_blob(cont, con, "iris.rds")
 
-# uploading/downloading multiple files at once
-multiupload_blob(cont, "/data/logfiles/*.zip")
-multidownload_blob(cont, "jan*.*", "/data/january")
+# downloading files into memory: as a raw vector, and via a connection
+rawvec <- download_blob(cont, "iris.json", NULL)
+rawToChar(rawvec)
+
+con <- rawConnection(raw(0), "r+")
+download_blob(cont, "iris.json", con)
+unserialize(con)
 
 }
 }

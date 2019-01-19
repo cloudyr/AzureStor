@@ -126,6 +126,16 @@ test_that("Blob client interface works",
     download_blob(cont, "iris.rds", con_dl2)
     expect_identical(readBin("../resources/iris.rds", "raw", n=1e5), readBin(con_dl2, "raw", n=1e5))
 
+    # download to memory
+    rawvec <- download_blob(cont, "iris.rds", NULL)
+    iris2 <- unserialize(rawvec)
+    expect_identical(iris, iris2)
+
+    rawcon <- rawConnection(raw(0), open="r+")
+    download_blob(cont, "iris.json", rawcon)
+    iris3 <- as.data.frame(jsonlite::fromJSON(rawcon))
+    expect_identical(iris, iris3)
+
     # ways of deleting a container
     delete_blob_container(cont, confirm=FALSE)
     delete_blob_container(bl, "newcontainer2", confirm=FALSE)

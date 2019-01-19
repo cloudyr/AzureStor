@@ -224,7 +224,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #'
 #' @param container A blob container object.
 #' @param blob A string naming a blob.
-#' @param src,dest The source and destination files for uploading and downloading. For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file.
+#' @param src,dest The source and destination files for uploading and downloading. See 'Details' below.For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file. For downloading, 
 #' @param info For `list_blobs`, level of detail about each blob to return: a vector of names only; the name, size and last-modified date (default); or all information.
 #' @param confirm Whether to ask for confirmation on deleting a blob.
 #' @param blocksize The number of bytes to upload per HTTP(S) request.
@@ -239,6 +239,8 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' `upload_blob` and `download_blob` are the workhorse file transfer functions for blobs. They each take as inputs a _single_ filename or connection as the source for uploading/downloading, and a single filename as the destination.
 #'
 #' `multiupload_blob and `multidownload_blob` are functions for uploading and downloading _multiple_ blobs at once. They parallelise file transfers by deploying a cluster of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source. The `dest` argument should be a directory for downloading, and is not used for uploading.
+#'
+#' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 #'
 #' @return
 #' For `list_blobs`, details on the blobs in the container.
@@ -260,6 +262,10 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #'
 #' delete_blob(cont, "bigfile.zip")
 #'
+#' # uploading/downloading multiple files at once
+#' multiupload_blob(cont, "/data/logfiles/*.zip")
+#' multidownload_blob(cont, "jan*.*", "/data/january")
+#'
 #' # uploading serialized R objects via connections
 #' json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)
 #' con <- textConnection(json)
@@ -269,9 +275,13 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' con <- rawConnection(rds)
 #' upload_blob(cont, con, "iris.rds")
 #'
-#' # uploading/downloading multiple files at once
-#' multiupload_blob(cont, "/data/logfiles/*.zip")
-#' multidownload_blob(cont, "jan*.*", "/data/january")
+#' # downloading files into memory: as a raw vector, and via a connection
+#' rawvec <- download_blob(cont, "iris.json", NULL)
+#' rawToChar(rawvec)
+#'
+#' con <- rawConnection(raw(0), "r+")
+#' download_blob(cont, "iris.json", con)
+#' unserialize(con)
 #'
 #' }
 #' @rdname blob

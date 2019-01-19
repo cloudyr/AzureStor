@@ -9,43 +9,43 @@ globalVariables(c("self", "clus"), "AzureStor")
 
 .onLoad <- function(libname, pkgname)
 {
-    .AzureStor$azcopy <- find_azcopy()
+    # .AzureStor$azcopy <- find_azcopy()
 
     # all methods extending classes in external package must go in .onLoad
     add_methods()
 }
 
 
-.onAttach <- function(libname, pkgname)
-{
-    if(.AzureStor$azcopy != "")
-        packageStartupMessage("azcopy version 10+ binary found at ", .AzureStor$azcopy)
-}
+# .onAttach <- function(libname, pkgname)
+# {
+#     if(.AzureStor$azcopy != "")
+#         packageStartupMessage("azcopy version 10+ binary found at ", .AzureStor$azcopy)
+# }
 
 
-find_azcopy <- function()
-{
-    path <- Sys.which("azcopy")
-    if(path != "")
-    {
-        # we need version 10 or later
-        ver <- system2(path, "--version", stdout=TRUE)
-        if(!grepl("version 1[[:digit:]]", ver, ignore.case=TRUE))
-            path <- ""
-    }
-    unname(path)
-}
+# find_azcopy <- function()
+# {
+#     path <- Sys.which("azcopy")
+#     if(path != "")
+#     {
+#         # we need version 10 or later
+#         ver <- system2(path, "--version", stdout=TRUE)
+#         if(!grepl("version 1[[:digit:]]", ver, ignore.case=TRUE))
+#             path <- ""
+#     }
+#     unname(path)
+# }
 
 
-set_azcopy_path <- function(path)
-{
-    if(Sys.which(path) == "")
-        stop("azcopy binary not found")
+# set_azcopy_path <- function(path)
+# {
+#     if(Sys.which(path) == "")
+#         stop("azcopy binary not found")
     
-    ver <- system2(path, "--version", stdout=TRUE)
-    if(!grepl("version 1[[:digit:]]", ver, ignore.case=TRUE))
-        stop("azcopy version 10+ required but not found")
+#     ver <- system2(path, "--version", stdout=TRUE)
+#     if(!grepl("version 1[[:digit:]]", ver, ignore.case=TRUE))
+#         stop("azcopy version 10+ required but not found")
 
-    .AzureStor$azcopy <- path
-    invisible(path)
-}
+#     .AzureStor$azcopy <- path
+#     invisible(path)
+# }

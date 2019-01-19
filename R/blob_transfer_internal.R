@@ -109,7 +109,23 @@ download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=
     headers <- list()
     if(!is.null(lease))
         headers[["x-ms-lease-id"]] <- as.character(lease)
-    do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite))
+    
+    if(is.character(dest))
+        return(do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite)))
+    
+    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
+    cont <- httr::content(do_container_op(container, src, headers=headers, http_status_handler="pass"),
+                          as="raw")
+    if(is.null(dest))
+        return(cont)
+
+    if(inherits(dest, "rawConnection"))
+    {
+        writeBin(cont, dest)
+        seek(dest, 0)
+        invisible(NULL)
+    }
+    else stop("Unrecognised dest argument", call.=FALSE)
 }
 
 
