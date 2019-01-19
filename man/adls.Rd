@@ -39,9 +39,13 @@ delete_adls_dir(filesystem, dir, recursive = FALSE, confirm = TRUE)
 
 \item{lease}{The lease for a file, if present.}
 
+\item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R. Not yet implemented.}
+
 \item{overwrite}{When downloading, whether to overwrite an existing destination file.}
 
 \item{confirm}{Whether to ask for confirmation on deleting a file or directory.}
+
+\item{max_concurrent_transfers}{For \code{multiupload_adls_file} and \code{multidownload_adls_file}, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.}
 }
 \value{
 For \code{list_adls_files}, if \code{info="name"}, a vector of file/directory names. If \code{info="all"}, a data frame giving the file size and whether each object is a file or directory.

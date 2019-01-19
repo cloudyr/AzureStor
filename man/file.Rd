@@ -16,7 +16,7 @@
 multiupload_adls_file(share, src, dest, blocksize = 2^22, lease = NULL,
   use_azcopy = FALSE, max_concurrent_transfers = 10)
 
-multidownload_adls_file(share, src, dest, blocksize = 2^22,
+multidownload_adls_file(filesystem, src, dest, overwrite = FALSE,
   use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 list_azure_files(share, dir, info = c("all", "name"), prefix = NULL)
@@ -48,13 +48,15 @@ delete_azure_dir(share, dir, confirm = TRUE)
 
 \item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R. Not yet implemented.}
 
+\item{max_concurrent_transfers}{For \code{multiupload_azure_file} and \code{multidownload_azure_file}, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.}
+
+\item{overwrite}{When downloading, whether to overwrite an existing destination file.}
+
 \item{dir, file}{A string naming a directory or file respectively.}
 
 \item{info}{Whether to return names only, or all information in a directory listing.}
 
 \item{prefix}{For \code{list_azure_files}, filters the result to return only files and directories whose name begins with this prefix.}
-
-\item{overwrite}{When downloading, whether to overwrite an existing destination file.}
 
 \item{confirm}{Whether to ask for confirmation on deleting a file or directory.}
 }
