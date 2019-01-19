@@ -16,6 +16,13 @@ globalVariables(c("self", "clus"), "AzureStor")
 }
 
 
+.onUnload <- function(libpath)
+{
+    if(exists("clus", envir=.AzureStor) && inherits(.AzureStor$clus, "cluster"))
+        suppressWarnings(parallel::stopCluster(.AzureStor$clus))
+}
+
+
 # .onAttach <- function(libname, pkgname)
 # {
 #     if(.AzureStor$azcopy != "")

@@ -136,6 +136,26 @@ test_that("Blob client interface works",
     iris3 <- as.data.frame(jsonlite::fromJSON(con))
     expect_identical(iris, iris3)
 
+    # multiple file transfers
+    files <- lapply(1:10, function(f) sample(letters, 1000, replace=TRUE))
+    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    mapply(writeLines, files, filenames)
+
+    multiupload_blob(cont, file.path(tempdir(), "multitransfer_*"))
+    expect_warning(multiupload_blob(cont, file.path(tempdir(), "multitransfer_*"), "newnames"))
+
+    dest_dir <- file.path(tempdir(), "AzureStor_multitransfer")
+    if(!dir.exists(dest_dir))
+        dir.create(dest_dir)
+    multidownload_blob(cont, "multitransfer_*", dest_dir, overwrite=TRUE)
+
+    expect_true(all(sapply(filenames, function(f)
+    {
+        src <- readBin(f, "raw", n=1e5)
+        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
+        identical(src, dest)
+    })))
+
     # ways of deleting a container
     delete_blob_container(cont, confirm=FALSE)
     delete_blob_container(bl, "newcontainer2", confirm=FALSE)

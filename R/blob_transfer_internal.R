@@ -18,8 +18,7 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
         envir=environment())
     parallel::parSapply(.AzureStor$clus, src, function(f)
     {
-        AzureRMR::upload_blob(container, f, basename(f), type=type, blocksize=blocksize, lease=lease,
-            use_azcopy=FALSE)
+        AzureStor::upload_blob(container, f, basename(f), type=type, blocksize=blocksize, lease=lease)
     })
     invisible(NULL)
 }
@@ -97,8 +96,7 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
     parallel::parSapply(.AzureStor$clus, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureRMR::download_blob(container, f, dest, overwrite=overwrite, lease=lease,
-            use_azcopy=FALSE)
+        AzureStor::download_blob(container, f, dest, overwrite=overwrite, lease=lease)
     })
     invisible(NULL)
 }
