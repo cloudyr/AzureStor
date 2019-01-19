@@ -1,9 +1,12 @@
 multiupload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^22, lease=lease,
                                            max_concurrent_transfers=10)
 {
-    src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
+    src_dir <- dirname(src)
     src <- dir(src_dir, pattern=src_files, full.names=TRUE)
+
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
         return(upload_adls_file(filesystem, src, dest, blocksize=blocksize, lease=lease))
 
@@ -68,14 +71,15 @@ upload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, lea
 
 multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FALSE, max_concurrent_transfers=10)
 {
-    src_files <- glob2rx(basename(src))
     src_dir <- dirname(src)
     if(src_dir == ".")
         src_dir <- "/"
 
     files <- list_adls_files(filesystem, src_dir, info="name")
+    src <- grep(glob2rx(src), files, value=TRUE) # file listing on ADLS includes directory name
 
-    src <- sub("//", "/", file.path(src_dir, grep(src_files, files, value=TRUE)))
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
         return(download_adls_file(filesystem, src, dest, overwrite=overwrite))
 
@@ -87,6 +91,7 @@ multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FA
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
+        writeLines(dest, file.path("d:/misc/temp", basename(f)))
         AzureStor::download_adls_file(filesystem, f, dest, overwrite=overwrite)
     })
     invisible(NULL)
