@@ -309,8 +309,8 @@ download_azure_file <- function(share, src, dest, overwrite=FALSE, use_azcopy=FA
 #' @rdname file
 #' @export
 multidownload_azure_file <- function(share, src, dest, overwrite=FALSE,
-                               use_azcopy=FALSE,
-                               max_concurrent_transfers=10)
+                                     use_azcopy=FALSE,
+                                     max_concurrent_transfers=10)
 {
     if(use_azcopy)
         call_azcopy_download(share, src, dest, overwrite=overwrite)
