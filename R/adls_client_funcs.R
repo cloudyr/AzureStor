@@ -317,7 +317,7 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
 }
 
 
-#' @rdname file
+#' @rdname adls
 #' @export
 multiupload_adls_file <- function(share, src, dest, blocksize=2^22, lease=NULL,
                                    use_azcopy=FALSE,
@@ -340,7 +340,7 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL, 
 }
 
 
-#' @rdname file
+#' @rdname adls
 #' @export
 multidownload_adls_file <- function(filesystem, src, dest, overwrite=FALSE,
                                     use_azcopy=FALSE,

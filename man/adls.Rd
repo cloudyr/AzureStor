@@ -2,7 +2,9 @@
 % Please edit documentation in R/adls_client_funcs.R
 \name{list_adls_files}
 \alias{list_adls_files}
+\alias{multiupload_adls_file}
 \alias{upload_adls_file}
+\alias{multidownload_adls_file}
 \alias{download_adls_file}
 \alias{delete_adls_file}
 \alias{create_adls_dir}
@@ -12,8 +14,14 @@
 list_adls_files(filesystem, dir = "/", info = c("all", "name"),
   recursive = FALSE)
 
+multiupload_adls_file(share, src, dest, blocksize = 2^22, lease = NULL,
+  use_azcopy = FALSE, max_concurrent_transfers = 10)
+
 upload_adls_file(filesystem, src, dest, blocksize = 2^24, lease = NULL,
   use_azcopy = FALSE)
+
+multidownload_adls_file(filesystem, src, dest, overwrite = FALSE,
+  use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 download_adls_file(filesystem, src, dest, overwrite = FALSE,
   use_azcopy = FALSE)
@@ -41,11 +49,11 @@ delete_adls_dir(filesystem, dir, recursive = FALSE, confirm = TRUE)
 
 \item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R. Not yet implemented.}
 
+\item{max_concurrent_transfers}{For \code{multiupload_adls_file} and \code{multidownload_adls_file}, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.}
+
 \item{overwrite}{When downloading, whether to overwrite an existing destination file.}
 
 \item{confirm}{Whether to ask for confirmation on deleting a file or directory.}
-
-\item{max_concurrent_transfers}{For \code{multiupload_adls_file} and \code{multidownload_adls_file}, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.}
 }
 \value{
 For \code{list_adls_files}, if \code{info="name"}, a vector of file/directory names. If \code{info="all"}, a data frame giving the file size and whether each object is a file or directory.
