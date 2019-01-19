@@ -131,9 +131,9 @@ test_that("Blob client interface works",
     iris2 <- unserialize(rawvec)
     expect_identical(iris, iris2)
 
-    rawcon <- rawConnection(raw(0), open="r+")
-    download_blob(cont, "iris.json", rawcon)
-    iris3 <- as.data.frame(jsonlite::fromJSON(rawcon))
+    con <- rawConnection(raw(0), open="r+")
+    download_blob(cont, "iris.json", con)
+    iris3 <- as.data.frame(jsonlite::fromJSON(con))
     expect_identical(iris, iris3)
 
     # ways of deleting a container
@@ -143,6 +143,8 @@ test_that("Blob client interface works",
     delete_blob_container(paste0(bl$url, "newcontainer3"), key=bl$key, confirm=FALSE)
     Sys.sleep(5)
     expect_true(is_empty(list_blob_containers(bl)))
+
+    close(con)
 })
 
 rg$delete(confirm=FALSE)

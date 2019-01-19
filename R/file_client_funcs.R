@@ -331,7 +331,22 @@ upload_azure_file <- function(share, src, dest, blocksize=2^22)
 #' @export
 download_azure_file <- function(share, src, dest, overwrite=FALSE)
 {
-    do_container_op(share, src, config=httr::write_disk(dest, overwrite))
+    if(is.character(dest))
+        return(do_container_op(share, src, config=httr::write_disk(dest, overwrite)))
+
+    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
+    cont <- httr::content(do_container_op(share, src, http_status_handler="pass"),
+                          as="raw")
+    if(is.null(dest))
+        return(cont)
+
+    if(inherits(dest, "rawConnection"))
+    {
+        writeBin(cont, dest)
+        seek(dest, 0)
+        invisible(NULL)
+    }
+    else stop("Unrecognised dest argument", call.=FALSE)
 }
 
 #' @rdname file
