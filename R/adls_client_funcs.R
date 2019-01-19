@@ -7,11 +7,11 @@
 #' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-06-17"`.
 #' @param name The name of the filesystem to get, create, or delete.
 #' @param confirm For deleting a filesystem, whether to ask for confirmation.
-#' @param x For the print method, a file share object.
+#' @param x For the print method, a filesystem object.
 #' @param ... Further arguments passed to lower-level functions.
 #'
 #' @details
-#' You can call these functions in a couple of ways: by passing the full URL of the share, or by passing the endpoint object and the name of the share as a string.
+#' You can call these functions in a couple of ways: by passing the full URL of the filesystem, or by passing the endpoint object and the name of the filesystem as a string.
 #'
 #' If authenticating via AAD, you can supply the token either as a string, or as an object of class [AzureRMR::AzureToken], created via [AzureRMR::get_azure_token]. The latter is the recommended way of doing it, as it allows for automatic refreshing of expired tokens.
 #'
@@ -319,13 +319,13 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
 
 #' @rdname adls
 #' @export
-multiupload_adls_file <- function(share, src, dest, blocksize=2^22, lease=NULL,
+multiupload_adls_file <- function(filesystem, src, dest, blocksize=2^22, lease=NULL,
                                    use_azcopy=FALSE,
                                    max_concurrent_transfers=10)
 {
     if(use_azcopy)
-        call_azcopy_upload(share, src, dest, blocksize=blocksize, lease=lease)
-    else multiupload_adls_file_internal(share, src, dest, blocksize=blocksize, lease=lease,
+        call_azcopy_upload(filesystem, src, dest, blocksize=blocksize, lease=lease)
+    else multiupload_adls_file_internal(filesystem, src, dest, blocksize=blocksize, lease=lease,
                                         max_concurrent_transfers=max_concurrent_transfers)
 }
 
