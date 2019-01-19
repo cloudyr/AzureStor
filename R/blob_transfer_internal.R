@@ -4,6 +4,9 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
     src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
     src <- dir(src_dir, pattern=src_files, full.names=TRUE)
+
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
         return(upload_blob(container, src, dest, type=type, blocksize=blocksize, lease=lease))
 
@@ -83,6 +86,9 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
 
     src_files <- glob2rx(basename(src))
     src <- grep(src_files, files, value=TRUE)
+
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
         return(download_blob(container, src, dest, overwrite=overwrite, lease=lease))
 

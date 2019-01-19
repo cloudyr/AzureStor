@@ -3,6 +3,9 @@ multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, ma
     src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
     src <- dir(src_dir, pattern=src_files, full.names=TRUE)
+
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
         return(upload_azure_file(share, src, dest, blocksize=blocksize))
 
@@ -98,8 +101,10 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
         src_dir <- "/"
 
     files <- list_azure_files(share, src_dir, info="name")
-
     src <- sub("//", "/", file.path(src_dir, grep(src_files, files, value=TRUE)))
+
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
         return(download_azure_file(share, src, dest, overwrite=overwrite))
 
