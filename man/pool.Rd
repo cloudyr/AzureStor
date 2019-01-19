@@ -13,6 +13,8 @@ delete_pool()
 \item{max_concurrent_transfers}{The maximum number of concurrent file transfers to support, which translates into the number of background R processes to create. Each concurrent transfer requires a separate R process, so limit this is you are low on memory.}
 
 \item{restart}{For \code{init_pool}, whether to terminate an already running pool first.}
+
+\item{...}{Other arguments passed on to \code{parallel::makeCluster}.}
 }
 \description{
 Parallelise multiple file transfers in the background
@@ -23,5 +25,5 @@ AzureStor can parallelise file transfers by utilizing a pool of R processes in t
 If \code{init_pool} is called and the current pool is smaller than \code{max_concurrent_transfers}, it is resized.
 }
 \seealso{
-\link{multiupload_blob}, \link{multidownload_blob}
+\link{multiupload_blob}, \link{multidownload_blob}, \link[parallel:makeCluster]{parallel::makeCluster}
 }

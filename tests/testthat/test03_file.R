@@ -141,6 +141,26 @@ test_that("File client interface works",
     iris3 <- as.data.frame(jsonlite::fromJSON(con))
     expect_identical(iris, iris3)
 
+    # multiple file transfers
+    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
+    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    mapply(writeLines, files, filenames)
+
+    create_azure_dir(share, "multi")
+    multiupload_azure_file(share, file.path(tempdir(), "multitransfer_*"), "multi")
+
+    dest_dir <- file.path(tempdir(), "AzureStor_multitransfer")
+    if(!dir.exists(dest_dir))
+        dir.create(dest_dir)
+    multidownload_azure_file(share, "multi/multitransfer_*", dest_dir, overwrite=TRUE)
+
+    expect_true(all(sapply(filenames, function(f)
+    {
+        src <- readBin(f, "raw", n=1e5)
+        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
+        identical(src, dest)
+    })))
+
     # ways of deleting a share
     delete_file_share(share, confirm=FALSE)
     delete_file_share(fl, "newshare2", confirm=FALSE)

@@ -137,7 +137,7 @@ test_that("Blob client interface works",
     expect_identical(iris, iris3)
 
     # multiple file transfers
-    files <- lapply(1:10, function(f) sample(letters, 1000, replace=TRUE))
+    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
     filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
     mapply(writeLines, files, filenames)
 
