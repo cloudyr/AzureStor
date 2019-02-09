@@ -13,7 +13,7 @@
 
 ## Other changes
 
-* Add ADLS upload/download support to `upload_to_azure` and `download_from_azure`.
+* Add ADLS upload/download support to `upload_to_url` and `download_from_url`.
 * Set default blocksize for `upload_azure_file` to 4MB, the maximum permitted by the API (#5).
 * Allow resource group and subscription accessor methods to work when AzureStor is not on the search path.
 
