@@ -3,7 +3,7 @@
 \name{download_from_url}
 \alias{download_from_url}
 \alias{upload_to_url}
-\title{Generic upload and download}
+\title{Upload and download generics}
 \usage{
 download_from_url(src, dest, key = NULL, token = NULL, sas = NULL,
   ..., overwrite = FALSE)
@@ -20,7 +20,7 @@ upload_to_url(src, dest, key = NULL, token = token, sas = NULL, ...)
 \item{overwrite}{For downloading, whether to overwrite any destination files that exist.}
 }
 \description{
-Generic upload and download
+Upload and download generics
 }
 \details{
 These functions allow you to transfer files to and from a storage account, given the URL of the destination (for uploading) or source (for downloading). They dispatch to \link{upload_azure_file}/\link{download_azure_file} for a file storage URL, \link{upload_blob}/\link{download_blob} for a blob storage URL, and \link{upload_adls_file}/\link{download_adls_file} for an ADLSgen2 URL respectively.

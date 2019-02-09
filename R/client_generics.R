@@ -9,11 +9,11 @@ storage_container.blob_endpoint <- function(endpoint, name, ...)
 blob_container(endpoint, name, ...)
 
 #' @export
-storage_container.file_share <- function(endpoint, name, ...)
+storage_container.file_endpoint <- function(endpoint, name, ...)
 file_share(endpoint, name, ...)
 
 #' @export
-storage_container.adls_filesystem <- function(endpoint, name, ...)
+storage_container.adls_endpoint <- function(endpoint, name, ...)
 adls_filesystem(endpoint, name, ...)
 
 #' @export

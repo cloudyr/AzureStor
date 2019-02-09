@@ -166,7 +166,7 @@ print.adls_endpoint <- function(x, ...)
 
 
 
-#' Generic upload and download
+#' Upload and download generics
 #'
 #' @param src,dest The source and destination files/URLs. Paths are allowed.
 #' @param key,token,sas Authentication arguments: an access key, Azure Active Directory (AAD) token or a shared access signature (SAS). If multiple arguments are supplied, a key takes priority over a token, which takes priority over a SAS.
