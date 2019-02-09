@@ -134,15 +134,15 @@ unserialize(con)
 
 ### Interface to AzCopy
 
-Third, AzureStor includes an interface to [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10), Microsoft's high-performance commandline utility for copying files to and from storage. To use this, simply specify the argument `use_azcopy=TRUE` on any upload or download function. AzureStor will then call AzCopy to perform the file transfer, rather than using its own internal code. In addition, a `call_azcopy` function is provided to let you use AzCopy for any task.
+Third, AzureStor includes an interface to [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10), Microsoft's high-performance commandline utility for copying files to and from storage. To take advantage of this, simply include the argument `use_azcopy=TRUE` on any upload or download function. AzureStor will then call AzCopy to perform the file transfer, rather than using its own internal code. In addition, a `call_azcopy` function is provided to let you use AzCopy for any task.
 
 ```r
 # use azcopy to download
 myfs <- storage_container(ad_endp, "myfilesystem")
 storage_download(adlsfs, "/incoming/bigfile.tar.gz", "/data")
 
-# use azcopy to sync 2 a local and storage dir
-call_azcopy('sync c:/local/path "https://mystorage.blob.core.windows.net/mycontainer" --recursive=TRUE')
+# use azcopy to sync a local and remote dir
+call_azcopy('sync c:/local/path "https://mystorage.blob.core.windows.net/mycontainer" --recursive=true')
 ```
 
 _Note that AzureStor uses AzCopy version 10. It is incompatible with versions 8.1 and earlier._
