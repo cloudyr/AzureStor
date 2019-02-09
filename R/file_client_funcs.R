@@ -60,7 +60,7 @@ file_share.character <- function(endpoint, key=NULL, sas=NULL,
 file_share.file_endpoint <- function(endpoint, name, ...)
 {
     obj <- list(name=name, endpoint=endpoint)
-    class(obj) <- "file_share"
+    class(obj) <- c("file_share", "storage_container")
     obj
 }
 

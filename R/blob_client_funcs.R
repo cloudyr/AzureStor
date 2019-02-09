@@ -73,7 +73,7 @@ blob_container.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
 blob_container.blob_endpoint <- function(endpoint, name, ...)
 {
     obj <- list(name=name, endpoint=endpoint)
-    class(obj) <- "blob_container"
+    class(obj) <- c("blob_container", "storage_container")
     obj
 }
 

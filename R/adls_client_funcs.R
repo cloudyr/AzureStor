@@ -64,7 +64,7 @@ adls_filesystem.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
 adls_filesystem.adls_endpoint <- function(endpoint, name, ...)
 {
     obj <- list(name=name, endpoint=endpoint)
-    class(obj) <- "adls_filesystem"
+    class(obj) <- c("adls_filesystem", "storage_container")
     obj
 }
 

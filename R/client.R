@@ -192,57 +192,29 @@ print.adls_endpoint <- function(x, ...)
 #' }
 #' @rdname file_transfer
 #' @export
-download_from_azure <- function(src, dest, key=NULL, token=NULL, sas=NULL, ..., overwrite=FALSE)
+download_from_url <- function(src, dest, key=NULL, token=NULL, sas=NULL, ..., overwrite=FALSE)
 {
     az_path <- parse_storage_url(src)
     if(is.null(sas))
         sas <- find_sas(src)
-    endpoint <- storage_endpoint(az_path[1], key=key, token=token, sas=sas, ...)
 
-    if(inherits(endpoint, "blob_endpoint"))
-    {
-        cont <- blob_container(endpoint, az_path[2])
-        download_blob(cont, az_path[3], dest, overwrite=overwrite)
-    }
-    else if(inherits(endpoint, "file_endpoint"))
-    {
-        share <- file_share(endpoint, az_path[2])
-        download_azure_file(share, az_path[3], dest, overwrite=overwrite)
-    }
-    else if(inherits(endpoint, "adls_endpoint"))
-    {
-        fs <- adls_filesystem(endpoint, az_path[2])
-        download_adls_file(fs, az_path[3], dest, overwrite=overwrite)
-    }
-    else stop("Unknown storage endpoint", call.=FALSE)
+    endpoint <- storage_endpoint(az_path[1], key=key, token=token, sas=sas, ...)
+    cont <- storage_container(endpoint, az_path[2])
+    storage_download(cont, az_path[3], dest, overwrite=overwrite)
 }
 
 
 #' @rdname file_transfer
 #' @export
-upload_to_azure <- function(src, dest, key=NULL, token=token, sas=NULL, ...)
+upload_to_url <- function(src, dest, key=NULL, token=token, sas=NULL, ...)
 {
     az_path <- parse_storage_url(dest)
     if(is.null(sas))
         sas <- find_sas(dest)
-    endpoint <- storage_endpoint(az_path[1], key=key, token=token, sas=sas, ...)
 
-    if(inherits(endpoint, "blob_endpoint"))
-    {
-        cont <- blob_container(endpoint, az_path[2])
-        upload_blob(cont, src, az_path[3])
-    }
-    else if(inherits(endpoint, "file_endpoint"))
-    {
-        share <- file_share(endpoint, az_path[2])
-        upload_azure_file(share, src, az_path[3])
-    }
-    else if(inherits(endpoint, "adls_endpoint"))
-    {
-        fs <- adls_endpoint(endpoint, az_path[2])
-        upload_adls_file(fs, src, az_path[3])
-    }
-    else stop("Unknown storage endpoint", call.=FALSE)
+    endpoint <- storage_endpoint(az_path[1], key=key, token=token, sas=sas, ...)
+    cont <- storage_container(endpoint, az_path[2])
+    storage_upload(cont, src, az_path[3])
 }
 
 
@@ -252,25 +224,5 @@ find_sas <- function(url)
     if(querymark == -1)
         NULL
     else substr(url, querymark + 1, nchar(url))
-}
-
-
-## deprecate old functions
-
-#' @rdname file_transfer
-#' @export
-download_from_url <- function(src, dest, key=NULL, token=NULL, sas=NULL, ..., overwrite=FALSE)
-{
-    .Deprecated("download_from_azure")
-    download_from_azure(src, dest, key=key, token=token, sas=sas, ..., overwrite=overwrite)
-}
-
-
-#' @rdname file_transfer
-#' @export
-upload_to_url <- function(src, dest, key=NULL, token=NULL, sas=NULL, ...)
-{
-    .Deprecated("upload_to_azure")
-    upload_to_azure(src, dest, key=key, token=token, sas=sas, ...)
 }
 
