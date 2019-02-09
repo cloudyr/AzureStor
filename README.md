@@ -31,26 +31,48 @@ ad_endp_tok2 <- storage_endpoint("https://mystorage.dfs.core.windows.net", token
 
 ## Listing, creating and deleting containers
 
-AzureStor provides several functions for managing containers within a storage endpoint:
+AzureStor provides a rich framework for managing storage. The following generics allow you to manage storage containers:
+
+- `storage_container`: get a storage container (blob container, file share or ADLS filesystem)
+- `create_storage_container`
+- `delete_storage_container`
+- `list_storage_containers`
+
+In turn these dispatch to the following lower-level functions for each type of storage:
 
 | Operation | Blob | File | ADLS2 |
 | --------- | ---- | ---- | ----- |
-| list containers | `list_blob_containers` | `list_file_shares` | `list_adls_filesystems` |
 | get container | `blob_container` | `file_share` | `adls_filesystem` |
 | create container | `create_blob_container` | `create_file_share` | `create_adls_filesystem` |
 | delete container | `delete_blob_container` | `delete_file_share` | `delete_adls_filesystem` |
+| list containers | `list_blob_containers` | `list_file_shares` | `list_adls_filesystems` |
 
 ```r
 # example of working with containers (blob storage)
-list_blob_containers(bl_endp)
+list_storage_containers(bl_endp_key)
+cont <- storage_container(bl_endp, "mycontainer")
+newcont <- create_storage_container(bl_endp, "newcontainer")
+delete_storage_container(newcont)
+
+# you can also call the lower-level functions directly if desired
+list_blob_containers(bl_endp_key)
 cont <- blob_container(bl_endp, "mycontainer")
-newcont <- create_blob_container(bl_endp, "newcont")
+newcont <- create_blob_container(bl_endp, "newcontainer")
 delete_blob_container(newcont)
 ```
 
 ## Files and blobs
 
 Functions for working with objects within a storage container:
+
+- `list_storage_files`: list files/blobs in a directory (for ADLSgen2 and file storage) or blob container
+- `create_storage_dir`: for ADLSgen2 and file storage, create a directory
+- `delete_storage_dir`: for ADLSgen2 and file storage, delete a directory
+- `delete_storage_file`: delete a file or blob
+- `storage_upload`/`storage_download`: transfer a file to or from a storage container
+- `storage_multiupload`/`storage_multidownload`: transfer multiple files in parallel to or from a storage container
+
+As above, these dispatch to a family of lower-level functions for each type of storage:
 
 | Operation | Blob | File | ADLS2 |
 | --------- | ---- | ---- | ----- |
@@ -63,9 +85,33 @@ Functions for working with objects within a storage container:
 | upload multiple files | `multiupload_blob` | `multiupload_azure_file` | `multiupload_adls_file` |
 | download multiple files | `multidownload_blob` | `multidownload_azure_file` | `multidownload_adls_file` |
 
-### Uploading and downloading
+```r
+# example of working with files and directories (ADLSgen2)
+cont <- storage_container(ad_end_tok, "myfilesystem")
+list_storage_files(cont)
+create_storage_dir(cont, "newdir")
+storage_download(cont, "/readme.txt", "~/readme.txt")
+storage_multiupload(cont, "N:/data/*.*", "newdir")  # uploading everything in a directory, in parallel
+```
 
-AzureStor also includes a couple of extra features for uploading and downloading files. First, You can upload an in-memory R object via a _connection_, and similarly, you can download a file to a connection, or return it as a raw vector. This lets you transfer an object without having to create a temporary file as an intermediate step.
+
+## Uploading and downloading
+
+AzureStor includes a number of extra features to make transferring files efficient.
+
+### Parallel file transfers
+
+ First, as noted above, you can transfer multiple files in parallel using the `multiupload_*`/`multidownload_*` functions. These use a pool of background R processes to do the transfers in parallel, which usually results in major speedups when transferring multiple small files. The pool is created the first time a parallel file transfer is performed, and persists for the duration of the R session; this means you don't have to wait for the pool to be (re-)created each time.
+
+```r
+# uploading/downloading multiple files at once: use a wildcard to specify files to transfer
+multiupload_adls_file(filesystem, src="N:/logfiles/*.zip", dest="/")
+multidownload_adls_file(filesystem, src="/monthly/jan*.*", dest="~/data/january")
+```
+
+### Upload from and download to connections
+
+Second, you can upload a (single) in-memory R object via a _connection_, and similarly, you can download a file to a connection, or return it as a raw vector. This lets you transfer an object without having to create a temporary file as an intermediate step.
 
 ```r
 # uploading serialized R objects via connections
@@ -86,17 +132,27 @@ download_blob(cont, src="iris.rds", dest=con)
 unserialize(con)
 ```
 
-Second, when transferring several files at once, you can transfer them in parallel using the `multiupload_*`/`multidownload_*` functions. These use a pool of background R processes to do the transfers in parallel, which usually results in major speedups when transferring multiple small files. The pool is created the first time a parallel file transfer is performed, and persists for the duration of the R session; this means you don't have to wait for the pool to be (re-)created each time.
+### Interface to AzCopy
+
+Third, AzureStor includes an interface to [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10), Microsoft's high-performance commandline utility for copying files to and from storage. To use this, simply specify the argument `use_azcopy=TRUE` on any upload or download function. AzureStor will then call AzCopy to perform the file transfer, rather than using its own internal code. In addition, a `call_azcopy` function is provided to let you use AzCopy for any task.
 
 ```r
-# uploading/downloading multiple files at once: use a wildcard to specify files to transfer
-multiupload_adls_file(filesystem, src="N:/logfiles/*.zip", dest="/")
-multidownload_adls_file(filesystem, src="/monthly/jan*.*", dest="~/data/january")
+# use azcopy to download
+myfs <- storage_container(ad_endp, "myfilesystem")
+storage_download(adlsfs, "/incoming/bigfile.tar.gz", "/data")
+
+# use azcopy to sync 2 a local and storage dir
+call_azcopy('sync c:/local/path "https://mystorage.blob.core.windows.net/mycontainer" --recursive=TRUE')
 ```
+
+_Note that AzureStor uses AzCopy version 10. It is incompatible with versions 8.1 and earlier._
+
+For more information, see the [AzCopy repo on GitHub](https://github.com/Azure/azure-storage-azcopy).
+
 
 ## Admin interface
 
-AzureStor's admin-side interface allows you to easily create and delete resource accounts, as well as obtain access keys and generate a SAS. Here is a sample workflow:
+Finally, AzureStor's admin-side interface allows you to easily create and delete resource accounts, as well as obtain access keys and generate a SAS. Here is a sample workflow:
 
 ```r
 library(AzureRMR)
