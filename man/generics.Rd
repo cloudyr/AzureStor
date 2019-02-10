@@ -2,6 +2,7 @@
 % Please edit documentation in R/client_generics.R
 \name{storage_container}
 \alias{storage_container}
+\alias{storage_generics}
 \alias{storage_container.blob_endpoint}
 \alias{storage_container.file_endpoint}
 \alias{storage_container.adls_endpoint}
@@ -155,8 +156,8 @@ Storage container management methods:
 Storage object management methods:
 \itemize{
 \item \code{list_storage_files} dispatches to \code{list_blobs}, \code{list_azure_files} or \code{list_adls_files}
-\item \code{create_storage_dir} dispatches to \code{create_azure_dir} or \code{create_adls_dir}; it throws an error if passed a blob container
-\item \code{delete_storage_dir} dispatches to \code{delete_azure_dir} or \code{delete_adls_dir}; it throws an error if passed a blob container
+\item \code{create_storage_dir} dispatches to \code{create_azure_dir} or \code{create_adls_dir}; throws an error if passed a blob container
+\item \code{delete_storage_dir} dispatches to \code{delete_azure_dir} or \code{delete_adls_dir}; throws an error if passed a blob container
 \item \code{delete_storage_file} dispatches to \code{delete_blob}, \code{delete_azure_file} or \code{delete_adls_file}
 }
 }

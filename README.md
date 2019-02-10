@@ -4,18 +4,18 @@
 ![Downloads](https://cranlogs.r-pkg.org/badges/AzureStor)
 [![Travis Build Status](https://travis-ci.org/cloudyr/AzureStor.png?branch=master)](https://travis-ci.org/cloudyr/AzureStor)
 
-This package implements both an admin- and client-side interface to [Azure Storage Services](https://docs.microsoft.com/en-us/rest/api/storageservices/). The admin interface uses R6 classes and extends the framework provided by [AzureRMR](https://github.com/hong-revo/AzureRMR). The client interface provides easy access to storage via S3 classes and methods.
+This package implements both an admin- and client-side interface to [Azure Storage Services](https://docs.microsoft.com/en-us/rest/api/storageservices/). The admin interface uses R6 classes and extends the framework provided by [AzureRMR](https://github.com/hong-revo/AzureRMR). The client interface provides several S3 methods for efficiently managing storage and performing file transfers.
 
 ## Storage endpoints
 
 The interface for accessing storage is similar across blobs, files and ADLSGen2. You call the `storage_endpoint` function and provide the endpoint URI, along with your authentication credentials. AzureStor will figure out the type of storage from the URI.
 
 AzureStor supports all the different ways you can authenticate with a storage endpoint:
-- Blob storage supports authenticating with an access key, shared access signature (SAS), or an Azure Active Directory OAuth token;
+- Blob storage supports authenticating with an access key, shared access signature (SAS), or an Azure Active Directory (AAD) OAuth token;
 - File storage supports access key and SAS;
 - ADLSgen2 supports access key and AAD token.
 
-In the case of an AAD token, you can also provide an object obtained via `AzureRMR::get_azure_token()`. If you do this, AzureStor can also automatically refresh the token for you when it expires.
+In the case of an AAD token, you can also provide an object obtained via `AzureAuth::get_azure_token()` or `httr::oauth2.0_token`. If you do this, AzureStor can also automatically refresh the token for you when it expires.
 
 ```r
 # various endpoints for an account: blob, file, ADLS2
@@ -109,7 +109,7 @@ multiupload_adls_file(filesystem, src="N:/logfiles/*.zip", dest="/")
 multidownload_adls_file(filesystem, src="/monthly/jan*.*", dest="~/data/january")
 ```
 
-### Upload from and download to connections
+### Transfer to and from connections
 
 Second, you can upload a (single) in-memory R object via a _connection_, and similarly, you can download a file to a connection, or return it as a raw vector. This lets you transfer an object without having to create a temporary file as an intermediate step.
 
@@ -145,9 +145,9 @@ storage_download(adlsfs, "/incoming/bigfile.tar.gz", "/data")
 call_azcopy('sync c:/local/path "https://mystorage.blob.core.windows.net/mycontainer" --recursive=true')
 ```
 
-_Note that AzureStor uses AzCopy version 10. It is incompatible with versions 8.1 and earlier._
-
 For more information, see the [AzCopy repo on GitHub](https://github.com/Azure/azure-storage-azcopy).
+
+**Note that AzureStor uses AzCopy version 10. It is incompatible with versions 8.1 and earlier.**
 
 
 ## Admin interface

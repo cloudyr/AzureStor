@@ -108,5 +108,5 @@ upload_to_url("files.zip",
 \seealso{
 \link{storage_container}, \link{blob_container}, \link{file_share}, \link{adls_filesystem}
 
-\link{download_blob}, \link{download_azure_file}, \link{download_adls_file}
+\link{download_blob}, \link{download_azure_file}, \link{download_adls_file}, \link{use_azcopy}
 }

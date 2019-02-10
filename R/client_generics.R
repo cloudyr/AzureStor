@@ -19,8 +19,8 @@
 #'
 #' Storage object management methods:
 #' - `list_storage_files` dispatches to `list_blobs`, `list_azure_files` or `list_adls_files`
-#' - `create_storage_dir` dispatches to `create_azure_dir` or `create_adls_dir`; it throws an error if passed a blob container
-#' - `delete_storage_dir` dispatches to `delete_azure_dir` or `delete_adls_dir`; it throws an error if passed a blob container
+#' - `create_storage_dir` dispatches to `create_azure_dir` or `create_adls_dir`; throws an error if passed a blob container
+#' - `delete_storage_dir` dispatches to `delete_azure_dir` or `delete_adls_dir`; throws an error if passed a blob container
 #' - `delete_storage_file` dispatches to `delete_blob`, `delete_azure_file` or `delete_adls_file`
 #'
 #' @seealso
@@ -53,6 +53,7 @@
 #' storage_upload(cont, "~/file.txt", "newdir/storage_file.txt")
 #'
 #' }
+#' @aliases storage_generics
 #' @rdname generics
 #' @export
 storage_container <- function(endpoint, ...)

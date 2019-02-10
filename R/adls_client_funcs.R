@@ -22,7 +22,8 @@
 #'
 #' For `list_adls_filesystems`, a list of such objects.
 #'
-#' @seealso [storage_endpoint], [az_storage]
+#' @seealso
+#' [storage_endpoint], [az_storage], [storage_container]
 #'
 #' @examples
 #' \dontrun{
@@ -230,7 +231,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' For `download_adls_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
 #'
 #' @seealso
-#' [adls_filesystem], [az_storage]
+#' [adls_filesystem], [az_storage], [storage_download], [use_azcopy]
 #'
 #' @examples
 #' \dontrun{
