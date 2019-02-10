@@ -231,7 +231,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' For `download_adls_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
 #'
 #' @seealso
-#' [adls_filesystem], [az_storage], [storage_download], [use_azcopy]
+#' [adls_filesystem], [az_storage], [storage_download], [call_azcopy]
 #'
 #' @examples
 #' \dontrun{

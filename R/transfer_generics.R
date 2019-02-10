@@ -16,7 +16,7 @@
 #' @seealso
 #' [storage_container], [blob_container], [file_share], [adls_filesystem]
 #'
-#' [download_blob], [download_azure_file], [download_adls_file], [use_azcopy]
+#' [download_blob], [download_azure_file], [download_adls_file], [call_azcopy]
 #'
 #' @examples
 #' \dontrun{

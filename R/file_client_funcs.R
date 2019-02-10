@@ -216,7 +216,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #' For `download_azure_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
 #'
 #' @seealso
-#' [file_share], [az_storage], [storage_download], [use_azcopy]
+#' [file_share], [az_storage], [storage_download], [call_azcopy]
 #'
 #' [AzCopy version 10 on GitHub](https://github.com/Azure/azure-storage-azcopy)
 #'

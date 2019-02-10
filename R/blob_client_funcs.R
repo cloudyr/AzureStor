@@ -247,7 +247,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' For `list_blobs`, details on the blobs in the container. For `download_blob`, if `dest=NULL`, the contents of the downloaded blob as a raw vector.
 #'
 #' @seealso
-#' [blob_container], [az_storage], [storage_download], [use_azcopy]
+#' [blob_container], [az_storage], [storage_download], [call_azcopy]
 #'
 #' [AzCopy version 10 on GitHub](https://github.com/Azure/azure-storage-azcopy)
 #'
