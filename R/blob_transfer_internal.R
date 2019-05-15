@@ -23,7 +23,7 @@ multiupload_blob_internal <- function(container, src, dest, type="BlockBlob", bl
         dest <- if(dest == "/")
             basename(f)
         else file.path(dest, basename(f))
-        AzureStor::upload_blob(container, f, dest, type=type, blocksize=blocksize, lease=lease)
+        AzureStor::upload_blob(container, f, dest, type=type, blocksize=blocksize, lease=lease, retries=retries)
     })
     invisible(NULL)
 }
@@ -104,7 +104,7 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureStor::download_blob(container, f, dest, overwrite=overwrite, lease=lease)
+        AzureStor::download_blob(container, f, dest, overwrite=overwrite, lease=lease, retries=retries)
     })
     invisible(NULL)
 }
