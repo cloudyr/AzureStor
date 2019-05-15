@@ -220,3 +220,12 @@ retry_transfer <- function(res)
         grepl("curl", deparse(res$call[[1]]), fixed=TRUE) &&
         !grepl("Could not resolve host", res$message, fixed=TRUE)
 }
+
+
+retry_upload_message <- function(src)
+{
+    if(is.character(src))
+        sprintf("Error uploading file %s, retrying...", src)
+    else "Error uploading from connection, retrying..."
+}
+

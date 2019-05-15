@@ -199,6 +199,82 @@ test_that("AAD authentication works",
 })
 
 
+test_that("Invalid transfers handled correctly",
+{
+    ## nonexistent endpoint
+    badname <- paste0(sample(letters, 20, TRUE), collapse="")
+    endp <- adls_endpoint(sprintf("https://%s.dfs.core.windows.net", badname), key="foo")
+    fs <- adls_filesystem(endp, "nocontainer")
+
+    # uploading
+    expect_error(upload_adls_file(fs, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_adls_file(fs, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_adls_file(fs, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_adls_file(fs, "nofile", tempfile()))
+    expect_error(download_adls_file(fs, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_adls_file(fs, "nofile", con))
+
+
+    ## nonexistent container
+    ad <- stor$get_adls_endpoint()
+    fs <- adls_filesystem(ad, "nocontainer")
+
+    # uploading
+    expect_error(upload_adls_file(fs, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_adls_file(fs, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_adls_file(fs, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_adls_file(fs, "nofile", tempfile()))
+    expect_error(download_adls_file(fs, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_adls_file(fs, "nofile", con))
+
+
+    ## bad auth
+    ad$key <- "badkey"
+
+    fs <- adls_filesystem(ad, "nocontainer")
+
+    # uploading
+    expect_error(upload_adls_file(fs, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_adls_file(fs, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_adls_file(fs, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_adls_file(fs, "nofile", tempfile()))
+    expect_error(download_adls_file(fs, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_adls_file(fs, "nofile", con))
+
+    close(con)
+})
+
+
 teardown(
 {
     ad <- stor$get_adls_endpoint()

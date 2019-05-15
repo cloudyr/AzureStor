@@ -15,16 +15,17 @@ list_adls_files(filesystem, dir = "/", info = c("all", "name"),
   recursive = FALSE)
 
 multiupload_adls_file(filesystem, src, dest, blocksize = 2^22,
-  lease = NULL, use_azcopy = FALSE, max_concurrent_transfers = 10)
+  lease = NULL, retries = 5, use_azcopy = FALSE,
+  max_concurrent_transfers = 10)
 
 upload_adls_file(filesystem, src, dest, blocksize = 2^24, lease = NULL,
-  use_azcopy = FALSE)
+  retries = 5, use_azcopy = FALSE)
 
 multidownload_adls_file(filesystem, src, dest, overwrite = FALSE,
-  use_azcopy = FALSE, max_concurrent_transfers = 10)
+  retries = 5, use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 download_adls_file(filesystem, src, dest, overwrite = FALSE,
-  use_azcopy = FALSE)
+  retries = 5, use_azcopy = FALSE)
 
 delete_adls_file(filesystem, file, confirm = TRUE)
 
@@ -46,6 +47,8 @@ delete_adls_dir(filesystem, dir, recursive = FALSE, confirm = TRUE)
 \item{blocksize}{The number of bytes to upload per HTTP(S) request.}
 
 \item{lease}{The lease for a file, if present.}
+
+\item{retries}{The number of times the file transfer functions will retry when they encounter an error. Set this to 0 to disable retries. This is applied per block for uploading, and to the entire file for downloading.}
 
 \item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.}
 
