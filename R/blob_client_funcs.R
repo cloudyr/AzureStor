@@ -232,6 +232,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param lease The lease for a blob, if present.
 #' @param type When uploading, the type of blob to create. Currently only block blobs are supported.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
+#' @param retries The number of times AzureStor will retry a file transfer if it fails. Set this to 0 to disable retries.
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
 #' @param max_concurrent_transfers For `multiupload_blob` and `multidownload_blob`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
 #' @param prefix For `list_blobs`, filters the result to return only blobs whose name begins with this prefix.
@@ -333,44 +334,44 @@ list_blobs <- function(container, info=c("partial", "name", "all"),
 
 #' @rdname blob
 #' @export
-upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL, retries=5,
                         use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
-    else upload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease)
+    else upload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease, retries=retries)
 }
 
 #' @rdname blob
 #' @export
-multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL, retries=5,
                              use_azcopy=FALSE,
                              max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
-    else multiupload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
+    else multiupload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease, retries=retries,
                                    max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob
 #' @export
-download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE)
+download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5, use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else download_blob_internal(container, src, dest, overwrite=overwrite, lease=lease)
+    else download_blob_internal(container, src, dest, overwrite=overwrite, lease=lease, retries=retries)
 }
 
 #' @rdname blob
 #' @export
-multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL,
+multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5,
                                use_azcopy=FALSE,
                                max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else multidownload_blob_internal(container, src, dest, overwrite=overwrite, lease=lease,
+    else multidownload_blob_internal(container, src, dest, overwrite=overwrite, lease=lease, retries=retries,
                                      max_concurrent_transfers=max_concurrent_transfers)
 }
 
