@@ -64,7 +64,22 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
         id <- openssl::base64_encode(sprintf("%s-%010d", base_id, i))
         opts <- list(comp="block", blockid=id)
 
-        do_container_op(container, dest, headers=headers, body=body, options=opts, http_verb="PUT")
+        for(r in seq_len(retries + 1))
+        {
+            res <- tryCatch(
+                do_container_op(container, dest, headers=headers, body=body, options=opts, http_verb="PUT"),
+                error=function(e) e
+            )
+            if(!inherits(res, "error"))
+                break
+            else message("Error uploading block ", i, " of file ", src, ", retrying...\n")
+        }
+        if(inherits(res, "error"))
+        {
+            # fix printed output from httr errors
+            class(res) <- c("simpleError", "error", "condition")
+            stop(res)
+        }
 
         blocklist <- c(blocklist, list(Latest=list(id)))
         i <- i + 1
@@ -117,18 +132,48 @@ download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=
         headers[["x-ms-lease-id"]] <- as.character(lease)
     
     if(is.character(dest))
-        return(do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite),
-               progress="down"))
+    {
+        for(r in seq_len(retries + 1))
+        {
+            res <- tryCatch(
+                do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite),
+                    progress="down"),
+                error=function(e) e
+            )
+            if(!inherits(res, "error"))
+                break
+            else message("Error downloading file ", src, ", retrying...\n")
+        }
+        if(inherits(res, "error"))
+        {
+            # fix printed output from httr errors
+            class(res) <- c("simpleError", "error", "condition")
+            stop(res)
+        }
+
+        return(res)
+    }
     
     # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    cont <- httr::content(do_container_op(container, src, headers=headers, http_status_handler="pass",
-                          as="raw", progress="down"))
+    for(r in seq_len(retries + 1))
+    {
+        res <- tryCatch(
+            httr::content(
+                do_container_op(container, src, headers=headers, http_status_handler="pass", progress="down"),
+                as="raw"
+            ),
+            error=function(e) e
+        )
+        if(!inherits(res, "error"))
+            break
+        else message("Error downloading file ", src, ", retrying...\n")
+    }
     if(is.null(dest))
-        return(cont)
+        return(res)
 
     if(inherits(dest, "rawConnection"))
     {
-        writeBin(cont, dest)
+        writeBin(res, dest)
         seek(dest, 0)
         invisible(NULL)
     }
