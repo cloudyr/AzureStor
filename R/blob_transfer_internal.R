@@ -70,16 +70,12 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
                 do_container_op(container, dest, headers=headers, body=body, options=opts, http_verb="PUT"),
                 error=function(e) e
             )
-            if(!inherits(res, "error"))
-                break
-            else message("Error uploading block ", i, " of file ", src, ", retrying...\n")
+            if(retry_transfer(res))
+                message("Error uploading block ", i, " of file ", src, ", retrying...\n")
+            else break 
         }
         if(inherits(res, "error"))
-        {
-            # fix printed output from httr errors
-            class(res) <- c("simpleError", "error", "condition")
             stop(res)
-        }
 
         blocklist <- c(blocklist, list(Latest=list(id)))
         i <- i + 1
@@ -127,55 +123,47 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
 
 download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5)
 {
+    file_dest <- is.character(dest)
+    null_dest <- is.null(dest)
+    conn_dest <- inherits(dest, "rawConnection")
+
+    if(!file_dest && !null_dest && !conn_dest)
+        stop("Unrecognised dest argument", call.=FALSE)
+
     headers <- list()
     if(!is.null(lease))
         headers[["x-ms-lease-id"]] <- as.character(lease)
-    
-    if(is.character(dest))
-    {
-        for(r in seq_len(retries + 1))
-        {
-            res <- tryCatch(
-                do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite),
-                    progress="down"),
-                error=function(e) e
-            )
-            if(!inherits(res, "error"))
-                break
-            else message("Error downloading file ", src, ", retrying...\n")
-        }
-        if(inherits(res, "error"))
-        {
-            # fix printed output from httr errors
-            class(res) <- c("simpleError", "error", "condition")
-            stop(res)
-        }
 
-        return(res)
-    }
-    
     # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
+    config <- if(file_dest)
+        httr::write_disk(dest, overwrite)
+    else list()
+    handler <- if(file_dest) "stop" else "pass"
+
     for(r in seq_len(retries + 1))
     {
-        res <- tryCatch(
-            httr::content(
-                do_container_op(container, src, headers=headers, http_status_handler="pass", progress="down"),
-                as="raw"
-            ),
-            error=function(e) e
-        )
-        if(!inherits(res, "error"))
-            break
-        else message("Error downloading file ", src, ", retrying...\n")
-    }
-    if(is.null(dest))
-        return(res)
+        res <- tryCatch({
+            response <- do_container_op(container, src, headers=headers, config=config, progress="down",
+                http_status_handler=handler)
+             if(!file_dest)
+                httr::stop_for_status(response, storage_error_message(response))
+            else response
+        }, error=function(e) e)
 
-    if(inherits(dest, "rawConnection"))
-    {
-        writeBin(res, dest)
-        seek(dest, 0)
-        invisible(NULL)
+        if(retry_transfer(res))
+            message("Error downloading file ", src, ", retrying...")
+        else break 
     }
-    else stop("Unrecognised dest argument", call.=FALSE)
+    if(inherits(res, "error"))
+        stop(res)
+
+    if(conn_dest)
+    {
+        writeBin(httr::content(res, as="raw"), dest)
+        seek(dest, 0)
+    }
+
+    if(null_dest)
+        httr::content(res, as="raw")
+    else invisible(NULL)
 }

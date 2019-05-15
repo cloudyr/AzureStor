@@ -225,6 +225,79 @@ test_that("AAD authentication works",
 })
 
 
+test_that("Invalid transfers handled correctly",
+{
+    ## nonexistent endpoint
+    badname <- paste0(sample(letters, 20, TRUE), collapse="")
+    endp <- blob_endpoint(sprintf("https://%s.blob.core.windows.net", badname), key="foo")
+    cont <- blob_container(endp, "nocontainer")
+
+    # uploading
+    expect_error(upload_blob(cont, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_blob(cont, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_blob(cont, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_blob(cont, "nofile", tempfile()))
+    expect_error(download_blob(cont, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_blob(cont, "nofile", con))
+
+
+    ## nonexistent container
+    bl <- stor$get_blob_endpoint()
+    cont <- blob_container(bl, "nocontainer")
+
+    # uploading
+    expect_error(upload_blob(cont, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_blob(cont, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_blob(cont, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_blob(cont, "nofile", tempfile()))
+    expect_error(download_blob(cont, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_blob(cont, "nofile", con))
+
+
+    ## bad auth
+    bl$key <- "badkey"
+
+    cont <- blob_container(bl, "nocontainer")
+
+    # uploading
+    expect_error(upload_blob(cont, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_blob(cont, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_blob(cont, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_blob(cont, "nofile", tempfile()))
+    expect_error(download_blob(cont, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_blob(cont, "nofile", con))
+})
+
 teardown(
 {
     bl <- stor$get_blob_endpoint()
