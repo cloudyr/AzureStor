@@ -86,37 +86,26 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
 multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5,
                                         max_concurrent_transfers=10)
 {
-    for(i in seq_len(retries+1))
+    files <- list_blobs(container, info="name")
+
+    src_files <- glob2rx(sub("^/", "", src)) # strip leading slash if present, not meaningful
+    src <- grep(src_files, files, value=TRUE)
+
+    if(length(src) == 0)
+        stop("No files to transfer", call.=FALSE)
+    if(length(src) == 1)
+        return(download_blob(container, src, dest, overwrite=overwrite, lease=lease))
+
+    init_pool(max_concurrent_transfers)
+
+    parallel::clusterExport(.AzureStor$pool,
+        c("container", "dest", "overwrite", "lease"),
+        envir=environment())
+    parallel::parLapply(.AzureStor$pool, src, function(f)
     {
-        res <- tryCatch({
-            files <- list_blobs(container, info="name")
-
-            src_files <- glob2rx(sub("^/", "", src)) # strip leading slash if present, not meaningful
-            src <- grep(src_files, files, value=TRUE)
-
-            if(length(src) == 0)
-                stop("No files to transfer", call.=FALSE)
-            if(length(src) == 1)
-                return(download_blob(container, src, dest, overwrite=overwrite, lease=lease))
-
-            init_pool(max_concurrent_transfers)
-
-            parallel::clusterExport(.AzureStor$pool,
-                c("container", "dest", "overwrite", "lease"),
-                envir=environment())
-            parallel::parLapply(.AzureStor$pool, src, function(f)
-            {
-                dest <- file.path(dest, basename(f))
-                AzureStor::download_blob(container, f, dest, overwrite=overwrite, lease=lease)
-            })
-            invisible(NULL)
-        }, error=function(e) e)
-
-        if(!inherits(res, "error"))
-            break
-    }
-    if(inherits(res, "error"))
-        stop(e)
+        dest <- file.path(dest, basename(f))
+        AzureStor::download_blob(container, f, dest, overwrite=overwrite, lease=lease)
+    })
     invisible(NULL)
 }
 
