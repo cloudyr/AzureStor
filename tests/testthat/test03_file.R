@@ -172,6 +172,82 @@ test_that("File client interface works",
 })
 
 
+test_that("Invalid transfers handled correctly",
+{
+    ## nonexistent endpoint
+    badname <- paste0(sample(letters, 20, TRUE), collapse="")
+    endp <- file_endpoint(sprintf("https://%s.file.core.windows.net", badname), key="foo")
+    share <- file_share(endp, "nocontainer")
+
+    # uploading
+    expect_error(upload_azure_file(share, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_azure_file(share, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_azure_file(share, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_azure_file(share, "nofile", tempfile()))
+    expect_error(download_azure_file(share, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_azure_file(share, "nofile", con))
+
+
+    ## nonexistent container
+    fl <- stor$get_file_endpoint()
+    share <- file_share(fl, "nocontainer")
+
+    # uploading
+    expect_error(upload_azure_file(share, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_azure_file(share, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_azure_file(share, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_azure_file(share, "nofile", tempfile()))
+    expect_error(download_azure_file(share, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_azure_file(share, "nofile", con))
+
+
+    ## bad auth
+    fl$key <- "badkey"
+
+    share <- file_share(fl, "nocontainer")
+
+    # uploading
+    expect_error(upload_azure_file(share, "../resources/iris.csv", "iris.csv"))
+
+    json <- jsonlite::toJSON(iris)
+    con <- textConnection(json)
+    expect_error(upload_azure_file(share, con, "iris.json"))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    expect_error(upload_azure_file(share, con, "iris.rds"))
+
+    # downloading
+    expect_error(download_azure_file(share, "nofile", tempfile()))
+    expect_error(download_azure_file(share, "nofile", NULL))
+
+    con <- rawConnection(raw(0), "r+")
+    expect_error(download_azure_file(share, "nofile", con))
+
+    close(con)
+})
+
+
 teardown(
 {
     fl <- stor$get_file_endpoint()

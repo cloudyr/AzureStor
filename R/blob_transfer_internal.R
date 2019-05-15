@@ -145,7 +145,7 @@ download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=
         res <- tryCatch({
             response <- do_container_op(container, src, headers=headers, config=config, progress="down",
                 http_status_handler=handler)
-             if(!file_dest)
+            if(!file_dest)
                 httr::stop_for_status(response, storage_error_message(response))
             else response
         }, error=function(e) e)

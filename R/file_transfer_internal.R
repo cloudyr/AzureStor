@@ -1,4 +1,4 @@
-multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, max_concurrent_transfers=10)
+multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, max_concurrent_transfers=10, retries=5)
 {
     src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
@@ -7,7 +7,7 @@ multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, ma
     if(length(src) == 0)
         stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
-        return(upload_azure_file(share, src, dest, blocksize=blocksize))
+        return(upload_azure_file(share, src, dest, blocksize=blocksize, retries=retries))
 
     init_pool(max_concurrent_transfers)
 
@@ -17,13 +17,13 @@ multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, ma
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- sub("//", "/", file.path(dest, basename(f))) # API too dumb to handle //'s
-        AzureStor::upload_azure_file(share, f, dest, blocksize=blocksize)
+        AzureStor::upload_azure_file(share, f, dest, blocksize=blocksize, retries=retries)
     })
     invisible(NULL)
 }
 
 
-upload_azure_file_internal <- function(share, src, dest, blocksize=2^22)
+upload_azure_file_internal <- function(share, src, dest, blocksize=2^22, retries=5)
 {
     # set content type
     content_type <- if(inherits(src, "connection"))
@@ -81,7 +81,18 @@ upload_azure_file_internal <- function(share, src, dest, blocksize=2^22)
         headers[["content-length"]] <- sprintf("%.0f", thisblock)
         headers[["range"]] <- sprintf("bytes=%.0f-%.0f", range_begin, range_begin + thisblock - 1)
 
-        do_container_op(share, dest, headers=headers, body=body, options=options, http_verb="PUT")
+        for(r in seq_len(retries + 1))
+        {
+            res <- tryCatch(
+                do_container_op(share, dest, headers=headers, body=body, options=options, http_verb="PUT"),
+                error=function(e) e
+            )
+            if(retry_transfer(res))
+                message("Error uploading file ", src, ", retrying...\n")
+            else break 
+        }
+        if(inherits(res, "error"))
+            stop(res)
 
         range_begin <- range_begin + thisblock
     }
@@ -93,7 +104,7 @@ upload_azure_file_internal <- function(share, src, dest, blocksize=2^22)
 }
 
 
-multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE, max_concurrent_transfers=10)
+multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE, max_concurrent_transfers=10, retries=5)
 {
     src_files <- glob2rx(basename(src))
     src_dir <- dirname(src)
@@ -106,7 +117,7 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
     if(length(src) == 0)
         stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
-        return(download_azure_file(share, src, dest, overwrite=overwrite))
+        return(download_azure_file(share, src, dest, overwrite=overwrite, retries=retries))
 
     init_pool(max_concurrent_transfers)
 
@@ -116,28 +127,50 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureStor::download_azure_file(share, f, dest, overwrite=overwrite)
+        AzureStor::download_azure_file(share, f, dest, overwrite=overwrite, retries=retries)
     })
     invisible(NULL)
 }
 
 
-download_azure_file_internal <- function(share, src, dest, overwrite=FALSE)
+download_azure_file_internal <- function(share, src, dest, overwrite=FALSE, retries=5)
 {
-    if(is.character(dest))
-        return(do_container_op(share, src, config=httr::write_disk(dest, overwrite), progress="down"))
+    file_dest <- is.character(dest)
+    null_dest <- is.null(dest)
+    conn_dest <- inherits(dest, "rawConnection")
+
+    if(!file_dest && !null_dest && !conn_dest)
+        stop("Unrecognised dest argument", call.=FALSE)
 
     # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    cont <- httr::content(do_container_op(share, src, http_status_handler="pass",
-                          as="raw", progress="down"))
-    if(is.null(dest))
-        return(cont)
+    config <- if(file_dest)
+        httr::write_disk(dest, overwrite)
+    else list()
+    handler <- if(file_dest) "stop" else "pass"
 
-    if(inherits(dest, "rawConnection"))
+    for(r in seq_len(retries + 1))
     {
-        writeBin(cont, dest)
-        seek(dest, 0)
-        invisible(NULL)
+        res <- tryCatch({
+            response <- do_container_op(share, src, config=config, progress="down", http_status_handler=handler)
+            if(!file_dest)
+                httr::stop_for_status(response, storage_error_message(response))
+            else response
+        }, error=function(e) e)
+
+        if(retry_transfer(res))
+            message("Error downloading file ", src, ", retrying...")
+        else break 
     }
-    else stop("Unrecognised dest argument", call.=FALSE)
+    if(inherits(res, "error"))
+        stop(res)
+
+    if(conn_dest)
+    {
+        writeBin(httr::content(res, as="raw"), dest)
+        seek(dest, 0)
+    }
+
+    if(null_dest)
+        httr::content(res, as="raw")
+    else invisible(NULL)
 }

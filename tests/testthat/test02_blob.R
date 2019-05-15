@@ -296,7 +296,10 @@ test_that("Invalid transfers handled correctly",
 
     con <- rawConnection(raw(0), "r+")
     expect_error(download_blob(cont, "nofile", con))
+
+    close(con)
 })
+
 
 teardown(
 {
