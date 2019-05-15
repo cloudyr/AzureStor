@@ -88,7 +88,7 @@ upload_azure_file_internal <- function(share, src, dest, blocksize=2^22, retries
                 error=function(e) e
             )
             if(retry_transfer(res))
-                message("Error uploading file ", src, ", retrying...\n")
+                retry_upload_message(src)
             else break 
         }
         if(inherits(res, "error"))

@@ -71,7 +71,7 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
                 error=function(e) e
             )
             if(retry_transfer(res))
-                message("Error uploading block ", i, " of file ", src, ", retrying...\n")
+                message(retry_upload_message(src))
             else break 
         }
         if(inherits(res, "error"))
