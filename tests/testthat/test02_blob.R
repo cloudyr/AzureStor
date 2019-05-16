@@ -301,6 +301,27 @@ test_that("Invalid transfers handled correctly",
 })
 
 
+test_that("chunked downloading works",
+{
+    bl <- stor$get_blob_endpoint()
+    cont <- create_blob_container(bl, "chunkdl")
+
+    orig_file <- "../resources/iris.csv"
+    new_file <- tempfile()
+    upload_blob(cont, orig_file, "iris.csv")
+
+    download_blob(cont, "iris.csv", new_file, overwrite=TRUE, blocksize=100)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(new_file, "raw", n=1e5))
+
+    con <- rawConnection(raw(0), open="r+")
+    download_blob(cont, "iris.csv", con, blocksize=130)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(con, "raw", n=1e5))
+
+    con <- download_blob(cont, "iris.csv", NULL, blocksize=150)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(con, "raw", n=1e5))
+})
+
+
 teardown(
 {
     bl <- stor$get_blob_endpoint()

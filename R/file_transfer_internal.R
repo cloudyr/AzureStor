@@ -134,7 +134,7 @@ multidownload_azure_file_internal <- function(share, src, dest, blocksize=2^22, 
 }
 
 
-download_azure_file_internal <- function(share, src, dest, overwrite=FALSE, retries=5)
+download_azure_file_internal <- function(share, src, dest, blocksize=2^22, overwrite=FALSE, retries=5)
 {
     file_dest <- is.character(dest)
     null_dest <- is.null(dest)
@@ -143,35 +143,51 @@ download_azure_file_internal <- function(share, src, dest, overwrite=FALSE, retr
     if(!file_dest && !null_dest && !conn_dest)
         stop("Unrecognised dest argument", call.=FALSE)
 
-    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    config <- if(file_dest)
-        httr::write_disk(dest, overwrite)
-    else list()
-    handler <- if(file_dest) "stop" else "pass"
-
-    for(r in seq_len(retries + 1))
+    headers <- list()
+    if(file_dest)
     {
-        res <- tryCatch({
-            response <- do_container_op(share, src, config=config, progress="down", http_status_handler=handler)
-            if(!file_dest)
-                httr::stop_for_status(response, storage_error_message(response))
-            else response
-        }, error=function(e) e)
-
-        if(retry_transfer(res))
-            message("Error downloading file ", src, ", retrying...")
-        else break 
+        if(!overwrite && file.exists(dest))
+            stop("Destination file exists and overwrite is FALSE", call.=FALSE)
+        dest <- file(dest, "w+b")
+        on.exit(close(dest))
     }
-    if(inherits(res, "error"))
-        stop(res)
-
-    if(conn_dest)
-    {
-        writeBin(httr::content(res, as="raw"), dest)
-        seek(dest, 0)
-    }
-
     if(null_dest)
-        httr::content(res, as="raw")
-    else invisible(NULL)
+    {
+        dest <- rawConnection(raw(0), "w+b")
+        on.exit(seek(dest, 0))
+    }
+    if(conn_dest)
+        on.exit(seek(dest, 0))
+        
+    offset <- 0
+
+    # rather than getting the file size, we keep going until we hit eof (http 416)
+    # avoids extra REST call outside loop to get file properties
+    repeat
+    {
+        headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
+        for(r in seq_len(retries + 1))
+        {
+            # retry on curl errors, not on httr errors
+            res <- tryCatch(
+                do_container_op(share, src, headers=headers, progress="down", http_status_handler="pass"),
+                error=function(e) e
+            )
+            if(retry_transfer(res))
+                message(retry_download_message(src))
+            else break
+        }
+        if(inherits(res, "error"))
+            stop(res)
+
+        if(httr::status_code(res) == 416) # no data, overran eof
+            break
+
+        httr::stop_for_status(res)
+        writeBin(httr::content(res, as="raw"), dest)
+
+        offset <- offset + blocksize
+    }
+
+    if(null_dest) dest else invisible(NULL)
 }

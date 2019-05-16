@@ -248,6 +248,27 @@ test_that("Invalid transfers handled correctly",
 })
 
 
+test_that("chunked downloading works",
+{
+    fl <- stor$get_file_endpoint()
+    share <- create_file_share(fl, "chunkdl")
+
+    orig_file <- "../resources/iris.csv"
+    new_file <- tempfile()
+    upload_azure_file(share, orig_file, "iris.csv")
+
+    download_azure_file(share, "iris.csv", new_file, overwrite=TRUE, blocksize=100)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(new_file, "raw", n=1e5))
+
+    con <- rawConnection(raw(0), open="r+")
+    download_azure_file(share, "iris.csv", con, blocksize=130)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(con, "raw", n=1e5))
+
+    con <- download_azure_file(share, "iris.csv", NULL, blocksize=150)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(con, "raw", n=1e5))
+})
+
+
 teardown(
 {
     fl <- stor$get_file_endpoint()

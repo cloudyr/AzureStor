@@ -149,14 +149,13 @@ download_blob_internal <- function(container, src, dest, blocksize=2^24, overwri
     if(conn_dest)
         on.exit(seek(dest, 0))
         
-    start <- 0
-    end <- start + blocksize - 1
+    offset <- 0
 
-    # rather than getting the file size, we keep going until we hit eof (http 206 or 416)
-    # avoids extra REST call to get file properties
+    # rather than getting the file size, we keep going until we hit eof (http 416)
+    # avoids extra REST call outside loop to get file properties
     repeat
     {
-        headers$Range <- sprintf("bytes=%.0f-%.0f", start, end)
+        headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
         for(r in seq_len(retries + 1))
         {
             # retry on curl errors, not on httr errors
@@ -171,17 +170,13 @@ download_blob_internal <- function(container, src, dest, blocksize=2^24, overwri
         if(inherits(res, "error"))
             stop(res)
 
-        status <- httr::status_code(res)
-        if(status == 416) # no data, overran eof
+        if(httr::status_code(res) == 416) # no data, overran eof
             break
 
         httr::stop_for_status(res)
         writeBin(httr::content(res, as="raw"), dest)
-        if(status == 206) # partial data
-            break
 
-        start <- end + 1
-        end <- start + blocksize - 1
+        offset <- offset + blocksize
     }
 
     if(null_dest) dest else invisible(NULL)
