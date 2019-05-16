@@ -81,7 +81,7 @@ upload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, lea
 }
 
 
-multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FALSE, retries=5,
+multidownload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE, retries=5,
                                              max_concurrent_transfers=10)
 {
     src_dir <- dirname(src)
@@ -94,7 +94,7 @@ multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FA
     if(length(src) == 0)
         stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
-        return(download_adls_file(filesystem, src, dest, overwrite=overwrite, retries=retries))
+        return(download_adls_file(filesystem, src, dest, blocksize=blocksize, overwrite=overwrite, retries=retries))
 
     init_pool(max_concurrent_transfers)
 
@@ -104,13 +104,13 @@ multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FA
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureStor::download_adls_file(filesystem, f, dest, overwrite=overwrite, retries=retries)
+        AzureStor::download_adls_file(filesystem, f, dest, blocksize=blocksize, overwrite=overwrite, retries=retries)
     })
     invisible(NULL)
 }
 
 
-download_adls_file_internal <- function(filesystem, src, dest, overwrite=FALSE, retries=5)
+download_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE, retries=5)
 {
     file_dest <- is.character(dest)
     null_dest <- is.null(dest)

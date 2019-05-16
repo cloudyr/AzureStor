@@ -229,3 +229,8 @@ retry_upload_message <- function(src)
     else "Error uploading from connection, retrying..."
 }
 
+
+retry_download_message <- function(src)
+{
+    sprintf("Error downloading file %s, retrying...", src)
+}

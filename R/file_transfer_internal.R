@@ -1,4 +1,4 @@
-multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, max_concurrent_transfers=10, retries=5)
+multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, retries=5, max_concurrent_transfers=10)
 {
     src_dir <- dirname(src)
     src_files <- glob2rx(basename(src))
@@ -104,7 +104,8 @@ upload_azure_file_internal <- function(share, src, dest, blocksize=2^22, retries
 }
 
 
-multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE, max_concurrent_transfers=10, retries=5)
+multidownload_azure_file_internal <- function(share, src, dest, blocksize=2^22, overwrite=FALSE, retries=5,
+                                              max_concurrent_transfers=10)
 {
     src_files <- glob2rx(basename(src))
     src_dir <- dirname(src)
@@ -117,7 +118,7 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
     if(length(src) == 0)
         stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
-        return(download_azure_file(share, src, dest, overwrite=overwrite, retries=retries))
+        return(download_azure_file(share, src, dest, blocksize=blocksize, overwrite=overwrite, retries=retries))
 
     init_pool(max_concurrent_transfers)
 
@@ -127,7 +128,7 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureStor::download_azure_file(share, f, dest, overwrite=overwrite, retries=retries)
+        AzureStor::download_azure_file(share, f, dest, blocksize=blocksize, overwrite=overwrite, retries=retries)
     })
     invisible(NULL)
 }
