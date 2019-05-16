@@ -1,3 +1,7 @@
+# AzureStor 2.0.1.9000
+
+- By default, the upload/download functions will now retry file transfers on encountering a network error.
+
 # AzureStor 2.0.1
 
 - Display a progress bar when downloading single files. To turn this on or off, call `options(azuure_dl_progress_bar=TRUE|FALSE)`.
