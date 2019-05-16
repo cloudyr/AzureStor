@@ -211,7 +211,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' @param info Whether to return names only, or all information in a directory listing.
 #' @param src,dest The source and destination files for uploading and downloading. Paths are allowed. For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file.
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
-#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param lease The lease for a file, if present.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param retries The number of times the file transfer functions will retry when they encounter an error. Set this to 0 to disable retries. This is applied per block for uploading, and to the entire file for downloading.
@@ -347,24 +347,25 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL, 
 
 #' @rdname adls
 #' @export
-multidownload_adls_file <- function(filesystem, src, dest, overwrite=FALSE, retries=5,
+multidownload_adls_file <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE, retries=5,
                                     use_azcopy=FALSE,
                                     max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_upload(filesystem, src, dest, overwrite=overwrite)
-    else multidownload_adls_file_internal(filesystem, src, dest, overwrite=overwrite, retries=retries,
+    else multidownload_adls_file_internal(filesystem, src, dest, blocksize=blocksize, overwrite=overwrite,
+                                          retries=retries,
                                           max_concurrent_transfers=max_concurrent_transfers)
 }
 
 
 #' @rdname adls
 #' @export
-download_adls_file <- function(filesystem, src, dest, overwrite=FALSE, retries=5, use_azcopy=FALSE)
+download_adls_file <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE, retries=5, use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(filesystem, src, dest, overwrite=overwrite)
-    else download_adls_file_internal(filesystem, src, dest, overwrite=overwrite, retries=retries)
+    else download_adls_file_internal(filesystem, src, dest, blocksize=blocksize, overwrite=overwrite, retries=retries)
 }
 
 

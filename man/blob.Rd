@@ -19,11 +19,11 @@ multiupload_blob(container, src, dest, type = "BlockBlob",
   blocksize = 2^24, lease = NULL, retries = 5, use_azcopy = FALSE,
   max_concurrent_transfers = 10)
 
-download_blob(container, src, dest, overwrite = FALSE, lease = NULL,
-  retries = 5, use_azcopy = FALSE)
+download_blob(container, src, dest, blocksize = 2^24,
+  overwrite = FALSE, lease = NULL, retries = 5, use_azcopy = FALSE)
 
-multidownload_blob(container, src, dest, overwrite = FALSE,
-  lease = NULL, retries = 5, use_azcopy = FALSE,
+multidownload_blob(container, src, dest, blocksize = 2^24,
+  overwrite = FALSE, lease = NULL, retries = 5, use_azcopy = FALSE,
   max_concurrent_transfers = 10)
 
 delete_blob(container, blob, confirm = TRUE)
@@ -39,7 +39,7 @@ delete_blob(container, blob, confirm = TRUE)
 
 \item{type}{When uploading, the type of blob to create. Currently only block blobs are supported.}
 
-\item{blocksize}{The number of bytes to upload per HTTP(S) request.}
+\item{blocksize}{The number of bytes to upload/download per HTTP(S) request.}
 
 \item{lease}{The lease for a blob, if present.}
 

@@ -228,7 +228,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param src,dest The source and destination files for uploading and downloading. See 'Details' below.For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file. For downloading, 
 #' @param info For `list_blobs`, level of detail about each blob to return: a vector of names only; the name, size and last-modified date (default); or all information.
 #' @param confirm Whether to ask for confirmation on deleting a blob.
-#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param lease The lease for a blob, if present.
 #' @param type When uploading, the type of blob to create. Currently only block blobs are supported.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
@@ -356,22 +356,25 @@ multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2
 
 #' @rdname blob
 #' @export
-download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5, use_azcopy=FALSE)
+download_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL, retries=5,
+                          use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else download_blob_internal(container, src, dest, overwrite=overwrite, lease=lease, retries=retries)
+    else download_blob_internal(container, src, dest, blocksize=blocksize, overwrite=overwrite, lease=lease,
+                                retries=retries)
 }
 
 #' @rdname blob
 #' @export
-multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5,
+multidownload_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL, retries=5,
                                use_azcopy=FALSE,
                                max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else multidownload_blob_internal(container, src, dest, overwrite=overwrite, lease=lease, retries=retries,
+    else multidownload_blob_internal(container, src, dest, blocksize=blocksize, overwrite=overwrite, lease=lease,
+                                     retries=retries,
                                      max_concurrent_transfers=max_concurrent_transfers)
 }
 

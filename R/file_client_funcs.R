@@ -197,7 +197,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #' @param info Whether to return names only, or all information in a directory listing.
 #' @param src,dest The source and destination files for uploading and downloading. For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file.
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
-#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param retries The number of times the file transfer functions will retry when they encounter an error. Set this to 0 to disable retries. This is applied per block for uploading, and to the entire file for downloading.
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
@@ -310,22 +310,22 @@ multiupload_azure_file <- function(share, src, dest, blocksize=2^22, retries=5,
 
 #' @rdname file
 #' @export
-download_azure_file <- function(share, src, dest, overwrite=FALSE, retries=5, use_azcopy=FALSE)
+download_azure_file <- function(share, src, dest, blocksize=2^22, overwrite=FALSE, retries=5, use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(share, src, dest, overwrite=overwrite)
-    else download_azure_file_internal(share, src, dest, overwrite=overwrite, retries=retries)
+    else download_azure_file_internal(share, src, dest, blocksize=blocksize, overwrite=overwrite, retries=retries)
 }
 
 #' @rdname file
 #' @export
-multidownload_azure_file <- function(share, src, dest, overwrite=FALSE, retries=5,
+multidownload_azure_file <- function(share, src, dest, blocksize=2^22, overwrite=FALSE, retries=5,
                                      use_azcopy=FALSE,
                                      max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_download(share, src, dest, overwrite=overwrite)
-    else multidownload_azure_file_internal(share, src, dest, overwrite=overwrite, retries=retries,
+    else multidownload_azure_file_internal(share, src, dest, blocksize=blocksize, overwrite=overwrite, retries=retries,
                                            max_concurrent_transfers=max_concurrent_transfers)
 }
 

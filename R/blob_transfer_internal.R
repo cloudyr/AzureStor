@@ -94,7 +94,7 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
 }
 
 
-multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5,
+multidownload_blob_internal <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL, retries=5,
                                         max_concurrent_transfers=10)
 {
     files <- list_blobs(container, info="name")
@@ -121,7 +121,7 @@ multidownload_blob_internal <- function(container, src, dest, overwrite=FALSE, l
 }
 
 
-download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=NULL, retries=5)
+download_blob_internal <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL, retries=5)
 {
     file_dest <- is.character(dest)
     null_dest <- is.null(dest)
@@ -134,36 +134,55 @@ download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=
     if(!is.null(lease))
         headers[["x-ms-lease-id"]] <- as.character(lease)
 
-    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    config <- if(file_dest)
-        httr::write_disk(dest, overwrite)
-    else list()
-    handler <- if(file_dest) "stop" else "pass"
-
-    for(r in seq_len(retries + 1))
+    if(file_dest)
     {
-        res <- tryCatch({
-            response <- do_container_op(container, src, headers=headers, config=config, progress="down",
-                http_status_handler=handler)
-            if(!file_dest)
-                httr::stop_for_status(response, storage_error_message(response))
-            else response
-        }, error=function(e) e)
-
-        if(retry_transfer(res))
-            message("Error downloading file ", src, ", retrying...")
-        else break 
+        if(!overwrite && file.exists(dest))
+            stop("Destination file exists and overwrite is FALSE", call.=FALSE)
+        dest <- file(dest, "w+b")
+        on.exit(close(dest))
     }
-    if(inherits(res, "error"))
-        stop(res)
-
-    if(conn_dest)
-    {
-        writeBin(httr::content(res, as="raw"), dest)
-        seek(dest, 0)
-    }
-
     if(null_dest)
-        httr::content(res, as="raw")
-    else invisible(NULL)
+    {
+        dest <- rawConnection(raw(0), "w+b")
+        on.exit(seek(dest, 0))
+    }
+    if(conn_dest)
+        on.exit(seek(dest, 0))
+        
+    start <- 0
+    end <- start + blocksize - 1
+
+    # rather than getting the file size, we keep going until we hit eof (http 206 or 416)
+    # avoids extra REST call to get file properties
+    repeat
+    {
+        headers$Range <- sprintf("bytes=%.0f-%.0f", start, end)
+        for(r in seq_len(retries + 1))
+        {
+            # retry on curl errors, not on httr errors
+            res <- tryCatch(
+                do_container_op(container, src, headers=headers, progress="down", http_status_handler="pass"),
+                error=function(e) e
+            )
+            if(retry_transfer(res))
+                message(retry_download_message(src))
+            else break
+        }
+        if(inherits(res, "error"))
+            stop(res)
+
+        status <- httr::status_code(res)
+        if(status == 416) # no data, overran eof
+            break
+
+        httr::stop_for_status(res)
+        writeBin(httr::content(res, as="raw"), dest)
+        if(status == 206) # partial data
+            break
+
+        start <- end + 1
+        end <- start + blocksize - 1
+    }
+
+    if(null_dest) dest else invisible(NULL)
 }
