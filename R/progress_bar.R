@@ -1,8 +1,6 @@
 # custom progress bar
 # based on httr::progress, but with externally computed start and endpoints
 # necessary to handle chunked transfers properly
-# call init_storage_progress_bar before starting file transfer
-# call clear_storage_progress_bar when file transfer complete
 
 storage_progress_bar <- R6::R6Class("storage_progress_bar",
 
