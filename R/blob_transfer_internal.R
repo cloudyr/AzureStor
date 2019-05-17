@@ -139,11 +139,12 @@ download_blob_internal <- function(container, src, dest, blocksize=2^24, overwri
         on.exit(seek(dest, 0))
 
     # get file size (for progress bar)
-    res <- do_operation(container, src, headers=headers, http_verb="HEAD")
+    res <- do_container_op(container, src, headers=headers, http_verb="HEAD", http_status_handler="pass")
+    httr::stop_for_status(res, storage_error_message(res))
     size <- as.numeric(httr::headers(res)[["Content-Length"]])
-    offset <- 0
 
     bar <- storage_progress_bar$new(size, "down")
+    offset <- 0
 
     while(offset < size)
     {
@@ -156,5 +157,6 @@ download_blob_internal <- function(container, src, dest, blocksize=2^24, overwri
         bar$offset <- offset
     }
 
+    bar$close()
     if(null_dest) dest else invisible(NULL)
 }
