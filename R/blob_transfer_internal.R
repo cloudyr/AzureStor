@@ -137,23 +137,23 @@ download_blob_internal <- function(container, src, dest, blocksize=2^24, overwri
     }
     if(conn_dest)
         on.exit(seek(dest, 0))
-        
+
+    # get file size (for progress bar)
+    res <- do_operation(container, src, headers=headers, http_verb="HEAD")
+    size <- as.numeric(httr::headers(res)[["Content-Length"]])
     offset <- 0
 
-    # rather than getting the file size, we keep going until we hit eof (http 416)
-    # avoids extra REST call outside loop to get file properties
-    repeat
+    bar <- storage_progress_bar$new(size, "down")
+
+    while(offset < size)
     {
         headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
-        res <- do_container_op(container, src, headers=headers, progress="down", http_status_handler="pass")
-
-        if(httr::status_code(res) == 416) # no data, overran eof
-            break
-
+        res <- do_container_op(container, src, headers=headers, progress=bar$update(), http_status_handler="pass")
         httr::stop_for_status(res)
         writeBin(httr::content(res, as="raw"), dest)
 
         offset <- offset + blocksize
+        bar$offset <- offset
     }
 
     if(null_dest) dest else invisible(NULL)
