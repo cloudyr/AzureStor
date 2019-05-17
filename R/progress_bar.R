@@ -1,7 +1,5 @@
-# custom progress bar
-# based on httr::progress, but with externally computed start and endpoints
+# custom progress bar with externally computed start and end values
 # necessary to handle chunked transfers properly
-
 storage_progress_bar <- R6::R6Class("storage_progress_bar",
 
 public=list(
