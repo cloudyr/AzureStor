@@ -136,7 +136,7 @@ download_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, o
     {
         headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
         res <- do_container_op(filesystem, src, headers=headers, progress=bar$update(), http_status_handler="pass")
-        httr::stop_for_status(res)
+        httr::stop_for_status(res, storage_error_message(res))
         writeBin(httr::content(res, as="raw"), dest)
 
         offset <- offset + blocksize

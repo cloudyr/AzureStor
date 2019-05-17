@@ -160,7 +160,7 @@ download_azure_file_internal <- function(share, src, dest, blocksize=2^22, overw
     {
         headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
         res <- do_container_op(share, src, headers=headers, progress=bar$update(), http_status_handler="pass")
-        httr::stop_for_status(res)
+        httr::stop_for_status(res, storage_error_message(res))
         writeBin(httr::content(res, as="raw"), dest)
 
         offset <- offset + blocksize
